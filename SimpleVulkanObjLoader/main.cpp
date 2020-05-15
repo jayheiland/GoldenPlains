@@ -1,16 +1,11 @@
-#include "vulkan_handler.h"
+#include "graphics_layer.h"
 
 int main() {
-	VulkanHandler app;
+	GraphicsLayer grphLayer;
 
-	try {
-		app.run();
+	grphLayer.init();
+	while (!grphLayer.windowShouldClose()) {
+		grphLayer.draw();
 	}
-	catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	return EXIT_SUCCESS;
+	grphLayer.cleanup();
 }
-
