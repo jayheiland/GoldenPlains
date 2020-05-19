@@ -1,7 +1,9 @@
-#pragma once
+#ifndef VULKAN_HANDLER_H
+#define VULKAN_HANDLER_H
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -10,11 +12,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
+#define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
+
 
 #include <iostream>
 #include <fstream>
@@ -31,19 +33,8 @@
 #include <unordered_map>
 
 
-const std::vector<const char*> validationLayers = {
-	"VK_LAYER_KHRONOS_validation"
-};
 
-const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
-};
 
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif
 
 
 
@@ -102,13 +93,12 @@ struct Vertex {
 	}
 };
 
-namespace std {
-	template<> struct hash<Vertex> {
-		size_t operator()(Vertex const& vertex) const {
-			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-		}
-	};
-}
+template<> struct std::hash<Vertex> {
+	size_t operator()(Vertex const& vertex) const {
+		return ((std::hash<glm::vec3>()(vertex.pos) ^ (std::hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (std::hash<glm::vec2>()(vertex.texCoord) << 1);
+	}
+};
+
 
 struct UniformBufferObject {
 	alignas(16) glm::mat4 model;
@@ -118,6 +108,20 @@ struct UniformBufferObject {
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
 void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class VulkanHandler {
@@ -194,10 +198,7 @@ private:
 
 	bool framebufferResized = false;
 
-	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-		auto app = reinterpret_cast<VulkanHandler*>(glfwGetWindowUserPointer(window));
-		app->framebufferResized = true;
-	}
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void cleanupSwapChain();
 	void recreateSwapChain();
@@ -254,29 +255,9 @@ private:
 	std::vector<const char*> getRequiredExtensions();
 	bool checkValidationLayerSupport();
 
-	static std::vector<char> readFile(const std::string& filename) {
-		std::ifstream file(filename, std::ios::ate | std::ios::binary);
+	static std::vector<char> readFile(const std::string& filename);
 
-		if (!file.is_open()) {
-			throw std::runtime_error("failed to open file!");
-		}
-
-		size_t fileSize = (size_t)file.tellg();
-		std::vector<char> buffer(fileSize);
-
-		file.seekg(0);
-		file.read(buffer.data(), fileSize);
-
-		file.close();
-
-		return buffer;
-	}
-
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
-		return VK_FALSE;
-	}
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
 public:
 	void initWindow();
@@ -285,3 +266,5 @@ public:
 	bool windowCloseButtonClicked();
 	void cleanup();
 };
+
+#endif

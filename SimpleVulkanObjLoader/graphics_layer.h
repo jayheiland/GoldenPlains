@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GRAPHICS_LAYER_H
+#define GRAPHICS_LAYER_H
 
 #include "vulkan_handler.h"
 
@@ -14,3 +15,4 @@ public:
 	
 };
 
+#endif
