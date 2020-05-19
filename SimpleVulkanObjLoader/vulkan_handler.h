@@ -175,8 +175,12 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
+	struct Object3D {
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+	};
+
+	std::vector<Object3D> loadedObjects;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;

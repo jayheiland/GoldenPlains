@@ -1015,6 +1015,7 @@ void VulkanHandler::loadModel() {
 		throw std::runtime_error(warn + err);
 	}
 
+	Object3D newObject;
 	std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
 
 	for (const auto& shape : shapes) {
@@ -1035,17 +1036,22 @@ void VulkanHandler::loadModel() {
 			vertex.color = { 1.0f, 1.0f, 1.0f };
 
 			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-				vertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<uint32_t>(newObject.vertices.size());
+				newObject.vertices.push_back(vertex);
 			}
 
-			indices.push_back(uniqueVertices[vertex]);
+			newObject.indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+
+	loadedObjects.push_back(newObject);
 }
 
 void VulkanHandler::createVertexBuffer() {
-	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+	VkDeviceSize bufferSize = 0;
+	for (Object3D object : loadedObjects) {
+		bufferSize += sizeof(object.vertices[0]) * object.vertices.size();
+	}
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1053,7 +1059,12 @@ void VulkanHandler::createVertexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferSize);
+	std::vector<Vertex> allObjectVertices;
+	allObjectVertices.reserve(bufferSize);
+	for (Object3D object : loadedObjects) {
+		allObjectVertices.insert(allObjectVertices.end(), object.vertices.begin(), object.vertices.end());
+	}
+	memcpy(data, allObjectVertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
@@ -1065,7 +1076,10 @@ void VulkanHandler::createVertexBuffer() {
 }
 
 void VulkanHandler::createIndexBuffer() {
-	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+	VkDeviceSize bufferSize = 0;
+	for (Object3D object : loadedObjects) {
+		bufferSize += sizeof(object.indices[0]) * object.indices.size();
+	}
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1073,7 +1087,12 @@ void VulkanHandler::createIndexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indices.data(), (size_t)bufferSize);
+	std::vector<uint32_t> allObjectIndices;
+	allObjectIndices.reserve(bufferSize);
+	for (Object3D object : loadedObjects) {
+		allObjectIndices.insert(allObjectIndices.end(), object.indices.begin(), object.indices.end());
+	}
+	memcpy(data, allObjectIndices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
@@ -1288,7 +1307,12 @@ void VulkanHandler::createCommandBuffers() {
 
 		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
 
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+		size_t totalIndicesSize = 0;
+		for (Object3D object : loadedObjects) {
+			totalIndicesSize += object.indices.size();
+		}
+
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(totalIndicesSize), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
