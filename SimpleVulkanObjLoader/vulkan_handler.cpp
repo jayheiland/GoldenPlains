@@ -59,7 +59,10 @@ void VulkanHandler::initWindow() {
 	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
 
-void VulkanHandler::initVulkan() {
+void VulkanHandler::initVulkan(std::string vertShdrPath, std::string fragShdrPath) {
+	this->vertShdrPath = vertShdrPath;
+	this->fragShdrPath = fragShdrPath;
+
 	createInstance();
 	setupDebugMessenger();
 	createSurface();
@@ -507,8 +510,8 @@ void VulkanHandler::createDescriptorSetLayout() {
 }
 
 void VulkanHandler::createGraphicsPipeline() {
-	auto vertShaderCode = readFile("shaders/vert.spv");
-	auto fragShaderCode = readFile("shaders/frag.spv");
+	auto vertShaderCode = readFile(vertShdrPath);
+	auto fragShaderCode = readFile(fragShdrPath);
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);

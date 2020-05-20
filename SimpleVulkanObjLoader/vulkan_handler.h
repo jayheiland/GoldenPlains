@@ -198,6 +198,9 @@ private:
 
 	bool framebufferResized = false;
 
+	std::string vertShdrPath;
+	std::string fragShdrPath;
+
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void cleanupSwapChain();
@@ -261,7 +264,7 @@ private:
 
 public:
 	void initWindow();
-	void initVulkan();
+	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();

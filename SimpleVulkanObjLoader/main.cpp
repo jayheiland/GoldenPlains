@@ -3,7 +3,7 @@
 int main() {
 	GraphicsLayer grphLayer;
 
-	grphLayer.init();
+	grphLayer.init("./shaders/vert.spv", "./shaders/frag.spv");
 	while (!grphLayer.windowShouldClose()) {
 		grphLayer.draw();
 	}
