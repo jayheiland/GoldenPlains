@@ -129,7 +129,6 @@ private:
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
 
-	const std::string MODEL_PATH = "models/chalet.obj";
 	const std::string TEXTURE_PATH = "textures/chalet.jpg";
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -169,30 +168,37 @@ private:
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
 
-	uint32_t mipLevels;
-	VkImage textureImage;
-	VkDeviceMemory textureImageMemory;
-	VkImageView textureImageView;
-	VkSampler textureSampler;
-
-	struct Object3D {
-		std::vector<Vertex> vertices;
-		std::vector<uint32_t> indices;
+	struct Texture {
+		uint32_t mipLevels;
+		VkImage textureImage;
+		VkDeviceMemory textureImageMemory;
+		VkImageView textureImageView;
 	};
 
-	std::vector<Object3D> loadedObjects;
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
+	VkSampler textureSampler;
 
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::unordered_map<uint32_t, Texture> loadedTextures;
+
+	struct Model {
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+		VkBuffer vertexBuffer;
+		VkDeviceMemory vertexBufferMemory;
+		VkBuffer indexBuffer;
+		VkDeviceMemory indexBufferMemory;
+		std::vector<VkBuffer> uniformBuffers;
+		std::vector<VkDeviceMemory> uniformBuffersMemory;
+		std::vector<VkDescriptorSet> descriptorSets;
+		std::vector<VkCommandBuffer> commandBuffers;
+		uint32_t texture_id;
+	};
+
+	std::unordered_map<uint32_t, Model> loadedModels;
 
 	VkDescriptorPool descriptorPool;
-	std::vector<VkDescriptorSet> descriptorSets;
+	//std::vector<VkDescriptorSet> descriptorSets;
 
-	std::vector<VkCommandBuffer> commandBuffers;
+	
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -227,21 +233,24 @@ private:
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 	VkFormat findDepthFormat();
 	bool hasStencilComponent(VkFormat format);
-	void createTextureImage();
+
+	void createTextureImage(uint32_t id, std::string texturePath);
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 	VkSampleCountFlagBits getMaxUsableSampleCount();
-	void createTextureImageView();
+	void createTextureImageView(uint32_t id);
 	void createTextureSampler();
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	void loadModel();
-	void createVertexBuffer();
-	void createIndexBuffer();
+	
+	void createVertexBuffer(uint32_t id);
+	void createIndexBuffer(uint32_t id);
 	void createUniformBuffers();
 	void createDescriptorPool();
 	void createDescriptorSets();
+
+
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 	VkCommandBuffer beginSingleTimeCommands();
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
@@ -269,6 +278,9 @@ private:
 public:
 	void initWindow();
 	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
+	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id);
+	void loadTexture(uint32_t id, std::string texturePath);
+	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();
