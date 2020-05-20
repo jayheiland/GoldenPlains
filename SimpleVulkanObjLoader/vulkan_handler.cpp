@@ -1130,6 +1130,17 @@ void VulkanHandler::createUniformBuffers() {
 	}
 }
 
+void VulkanHandler::duplicateModel(uint32_t duplicate_id, uint32_t original_id) {
+	loadedModels.insert(std::make_pair(duplicate_id, loadedModels[original_id]));
+	createDescriptorPool();
+}
+
+void VulkanHandler::destroyModel(uint32_t id)
+{
+	loadedModels.erase(id);
+	createDescriptorPool();
+}
+
 void VulkanHandler::createDescriptorPool() {
 	//descriptor count / descriptor pool size must be greater than 0
 	uint32_t descriptorCount = swapChainImages.size() * loadedModels.size();
@@ -1158,11 +1169,7 @@ void VulkanHandler::createDescriptorSets() {
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;
-	uint32_t descriptorCount = swapChainImages.size() * loadedModels.size();
-	if (descriptorCount <= 0) {
-		descriptorCount = 1;
-	}
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(descriptorCount);
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
 	allocInfo.pSetLayouts = layouts.data();
 
 	for (auto& mdl : loadedModels) {

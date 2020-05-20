@@ -16,13 +16,24 @@ void GraphicsLayer::init(std::string vertShdrPath, std::string fragShdrPath)
 	}
 }
 
-Model_ID GraphicsLayer::loadModel(std::string modelPath, Texture_ID texture_id)
+Model_ID GraphicsLayer::createModel(std::string modelPath, Texture_ID texture_id)
 {
 	vulkHandler.loadModel(id_counter, modelPath, texture_id);
 	return id_counter++;
 }
 
-Texture_ID GraphicsLayer::loadTexture(std::string texturePath)
+Model_ID GraphicsLayer::duplicateModel(Model_ID original_model_id)
+{
+	vulkHandler.duplicateModel(id_counter, original_model_id);
+	return id_counter++;
+}
+
+void GraphicsLayer::destroyModel(Model_ID model_id)
+{
+	vulkHandler.destroyModel(model_id);
+}
+
+Texture_ID GraphicsLayer::createTexture(std::string texturePath)
 {
 	vulkHandler.loadTexture(id_counter, texturePath);
 	return id_counter++;

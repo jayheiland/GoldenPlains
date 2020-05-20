@@ -16,13 +16,14 @@ private:
 public:
 	GraphicsLayer();
 	void init(std::string vertShdrPath, std::string fragShdrPath);
-	Model_ID loadModel(std::string modelPath, Texture_ID texture_id);
-	Texture_ID loadTexture(std::string texturePath);
+	Model_ID createModel(std::string modelPath, Texture_ID texture_id);
+	Model_ID duplicateModel(Model_ID original_model_id);
+	void destroyModel(Model_ID model_id);
+	Texture_ID createTexture(std::string texturePath);
 	void setTextureForModel(Texture_ID texture_id, Model_ID model_id);
 	void draw();
 	bool windowShouldClose();
 	void cleanup();
-	
 };
 
 #endif

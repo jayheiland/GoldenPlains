@@ -113,23 +113,10 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 class VulkanHandler {
 private:
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
-
-	const std::string TEXTURE_PATH = "textures/chalet.jpg";
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -196,9 +183,6 @@ private:
 	std::unordered_map<uint32_t, Model> loadedModels;
 
 	VkDescriptorPool descriptorPool;
-	//std::vector<VkDescriptorSet> descriptorSets;
-
-	
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -279,6 +263,8 @@ public:
 	void initWindow();
 	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
 	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id);
+	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
+	void destroyModel(uint32_t id);
 	void loadTexture(uint32_t id, std::string texturePath);
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
 	void draw();
