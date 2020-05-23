@@ -30,7 +30,7 @@ Model_ID GraphicsLayer::duplicateModel(Model_ID original_model_id)
 
 void GraphicsLayer::destroyModel(Model_ID model_id)
 {
-	vulkHandler.destroyModel(model_id);
+	vulkHandler.queueDestroyModel(model_id);
 }
 
 Texture_ID GraphicsLayer::createTexture(std::string texturePath)

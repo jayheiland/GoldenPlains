@@ -84,9 +84,9 @@ void VulkanHandler::initVulkan(std::string vertShdrPath, std::string fragShdrPat
 	loadModel();
 	createVertexBuffer();
 	createIndexBuffer();
-	createUniformBuffers();
+	createUniformBuffers();*/
 	createDescriptorPool();
-	createDescriptorSets();
+	/*createDescriptorSets();
 	createCommandBuffers();*/
 
 	createSyncObjects();
@@ -220,10 +220,15 @@ void VulkanHandler::recreateSwapChain() {
 	createColorResources();
 	createDepthResources();
 	createFramebuffers();
-	createUniformBuffers();
+
+	for (auto mdl : loadedModels) {
+		createUniformBuffers(mdl.first);
+	}
 	createDescriptorPool();
-	createDescriptorSets();
-	createCommandBuffers();
+	for (auto mdl : loadedModels) {
+		createDescriptorSets(mdl.first);
+		createCommandBuffers(mdl.first);
+	}
 }
 
 void VulkanHandler::createInstance() {
@@ -872,7 +877,7 @@ VkSampleCountFlagBits VulkanHandler::getMaxUsableSampleCount() {
 }
 
 void VulkanHandler::createTextureImageView(uint32_t id) {
-	loadedTextures[id].textureImageView = createImageView(loadedTextures[id].textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, loadedTextures[id].mipLevels);
+	loadedTextures.at(id).textureImageView = createImageView(loadedTextures.at(id).textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, loadedTextures.at(id).mipLevels);
 }
 
 void VulkanHandler::createTextureSampler() {
@@ -1066,19 +1071,19 @@ void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t textu
 	}
 
 	newModel.texture_id = texture_id;
+	newModel.queued_for_destruction = false;
 	loadedModels.insert(std::make_pair(id, newModel));
 
 	createVertexBuffer(id);
 	createIndexBuffer(id);
 
-	createUniformBuffers();
-	createDescriptorPool();
-	createDescriptorSets();
-	createCommandBuffers();
+	createUniformBuffers(id);
+	createDescriptorSets(id);
+	createCommandBuffers(id);
 }
 
 void VulkanHandler::createVertexBuffer(uint32_t id) {
-	VkDeviceSize bufferSize = sizeof(loadedModels[id].vertices[0]) * loadedModels[id].vertices.size();
+	VkDeviceSize bufferSize = sizeof(loadedModels.at(id).vertices[0]) * loadedModels.at(id).vertices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1086,19 +1091,19 @@ void VulkanHandler::createVertexBuffer(uint32_t id) {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, loadedModels[id].vertices.data(), (size_t)bufferSize);
+	memcpy(data, loadedModels.at(id).vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, loadedModels[id].vertexBuffer, loadedModels[id].vertexBufferMemory);
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, loadedModels.at(id).vertexBuffer, loadedModels.at(id).vertexBufferMemory);
 
-	copyBuffer(stagingBuffer, loadedModels[id].vertexBuffer, bufferSize);
+	copyBuffer(stagingBuffer, loadedModels.at(id).vertexBuffer, bufferSize);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 void VulkanHandler::createIndexBuffer(uint32_t id) {
-	VkDeviceSize bufferSize = sizeof(loadedModels[id].indices[0]) * loadedModels[id].indices.size();
+	VkDeviceSize bufferSize = sizeof(loadedModels.at(id).indices[0]) * loadedModels.at(id).indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1106,47 +1111,63 @@ void VulkanHandler::createIndexBuffer(uint32_t id) {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, loadedModels[id].indices.data(), (size_t)bufferSize);
+	memcpy(data, loadedModels.at(id).indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, loadedModels[id].indexBuffer, loadedModels[id].indexBufferMemory);
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, loadedModels.at(id).indexBuffer, loadedModels.at(id).indexBufferMemory);
 
-	copyBuffer(stagingBuffer, loadedModels[id].indexBuffer, bufferSize);
+	copyBuffer(stagingBuffer, loadedModels.at(id).indexBuffer, bufferSize);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-void VulkanHandler::createUniformBuffers() {
-	for (auto& mdl : loadedModels) {
-		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+void VulkanHandler::createUniformBuffers(uint32_t id) {
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-		mdl.second.uniformBuffers.resize(swapChainImages.size());
-		mdl.second.uniformBuffersMemory.resize(swapChainImages.size());
+	loadedModels.at(id).uniformBuffers.resize(swapChainImages.size());
+	loadedModels.at(id).uniformBuffersMemory.resize(swapChainImages.size());
 
-		for (size_t i = 0; i < swapChainImages.size(); i++) {
-			createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mdl.second.uniformBuffers[i], mdl.second.uniformBuffersMemory[i]);
-		}
+	for (size_t i = 0; i < swapChainImages.size(); i++) {
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, loadedModels.at(id).uniformBuffers[i], loadedModels.at(id).uniformBuffersMemory[i]);
 	}
 }
 
 void VulkanHandler::duplicateModel(uint32_t duplicate_id, uint32_t original_id) {
-	loadedModels.insert(std::make_pair(duplicate_id, loadedModels[original_id]));
-	createDescriptorPool();
+	Model dupModel;
+	dupModel.vertices = loadedModels.at(original_id).vertices;
+	dupModel.indices = loadedModels.at(original_id).indices;
+	dupModel.texture_id = loadedModels.at(original_id).texture_id;
+	dupModel.texture_id = loadedModels.at(original_id).texture_id;
+	dupModel.queued_for_destruction = false;
+	loadedModels.insert(std::make_pair(duplicate_id, dupModel));
+
+	createVertexBuffer(duplicate_id);
+	createIndexBuffer(duplicate_id);
+
+	createUniformBuffers(duplicate_id);
+	createDescriptorSets(duplicate_id);
+	createCommandBuffers(duplicate_id);
 }
 
-void VulkanHandler::destroyModel(uint32_t id)
-{
+void VulkanHandler::queueDestroyModel(uint32_t id) {
+	loadedModels.at(id).queued_for_destruction = true;
+}
+
+void VulkanHandler::destroyModelAtFrame(uint32_t id, uint32_t frame){
+	vkFreeCommandBuffers(device, commandPool, 1, &loadedModels.at(id).commandBuffers.at(frame));
+	vkDestroyBuffer(device, loadedModels.at(id).uniformBuffers.at(frame), nullptr);
+	vkFreeMemory(device, loadedModels.at(id).uniformBuffersMemory.at(frame), nullptr);
+	vkDestroyBuffer(device, loadedModels.at(id).indexBuffer, nullptr);
+	vkFreeMemory(device, loadedModels.at(id).indexBufferMemory, nullptr);
+	vkDestroyBuffer(device, loadedModels.at(id).vertexBuffer, nullptr);
+	vkFreeMemory(device, loadedModels.at(id).vertexBufferMemory, nullptr);
 	loadedModels.erase(id);
-	createDescriptorPool();
 }
 
 void VulkanHandler::createDescriptorPool() {
-	//descriptor count / descriptor pool size must be greater than 0
-	uint32_t descriptorCount = swapChainImages.size() * loadedModels.size();
-	if (descriptorCount <= 0) {
-		descriptorCount = 1;
-	}
+	//descriptor count i.e. descriptor pool size must be greater than 0
+	uint32_t descriptorCount = DESCRIPTOR_POOL_SIZE;
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(descriptorCount);
@@ -1164,7 +1185,7 @@ void VulkanHandler::createDescriptorPool() {
 	}
 }
 
-void VulkanHandler::createDescriptorSets() {
+void VulkanHandler::createDescriptorSets(uint32_t id) {
 	std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1172,48 +1193,46 @@ void VulkanHandler::createDescriptorSets() {
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
 	allocInfo.pSetLayouts = layouts.data();
 
-	for (auto& mdl : loadedModels) {
-		mdl.second.descriptorSets.resize(swapChainImages.size());
-		if (vkAllocateDescriptorSets(device, &allocInfo, mdl.second.descriptorSets.data()) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate descriptor sets!");
-		}
+	loadedModels.at(id).descriptorSets.resize(swapChainImages.size());
+	if (vkAllocateDescriptorSets(device, &allocInfo, loadedModels.at(id).descriptorSets.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate descriptor sets!");
+	}
 
-		for (size_t i = 0; i < swapChainImages.size(); i++) {
-			VkDescriptorBufferInfo bufferInfo = {};
-			bufferInfo.buffer = mdl.second.uniformBuffers[i];
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(UniformBufferObject);
+	for (size_t i = 0; i < swapChainImages.size(); i++) {
+		VkDescriptorBufferInfo bufferInfo = {};
+		bufferInfo.buffer = loadedModels.at(id).uniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
 
-			VkDescriptorImageInfo imageInfo = {};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = loadedTextures[mdl.second.texture_id].textureImageView;
-			imageInfo.sampler = textureSampler;
+		VkDescriptorImageInfo imageInfo = {};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = loadedTextures.at(loadedModels.at(id).texture_id).textureImageView;
+		imageInfo.sampler = textureSampler;
 
-			std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+		std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 
-			descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[0].dstSet = mdl.second.descriptorSets[i];
-			descriptorWrites[0].dstBinding = 0;
-			descriptorWrites[0].dstArrayElement = 0;
-			descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrites[0].descriptorCount = 1;
-			descriptorWrites[0].pBufferInfo = &bufferInfo;
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = loadedModels.at(id).descriptorSets[i];
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[1].dstSet = mdl.second.descriptorSets[i];
-			descriptorWrites[1].dstBinding = 1;
-			descriptorWrites[1].dstArrayElement = 0;
-			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrites[1].descriptorCount = 1;
-			descriptorWrites[1].pImageInfo = &imageInfo;
+		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[1].dstSet = loadedModels.at(id).descriptorSets[i];
+		descriptorWrites[1].dstBinding = 1;
+		descriptorWrites[1].dstArrayElement = 0;
+		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[1].descriptorCount = 1;
+		descriptorWrites[1].pImageInfo = &imageInfo;
 
-			vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		}
+		vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
 void VulkanHandler::setTextureForModel(uint32_t texture_id, uint32_t model_id) {
-	loadedModels[model_id].texture_id = texture_id;
+	loadedModels.at(model_id).texture_id = texture_id;
 }
 
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1298,61 +1317,59 @@ uint32_t VulkanHandler::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlag
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void VulkanHandler::createCommandBuffers() {
-	for (auto& mdl : loadedModels) {
-		mdl.second.commandBuffers.resize(swapChainFramebuffers.size());
+void VulkanHandler::createCommandBuffers(uint32_t id) {
+	loadedModels.at(id).commandBuffers.resize(swapChainFramebuffers.size());
 
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = commandPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = (uint32_t)mdl.second.commandBuffers.size();
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = commandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)loadedModels.at(id).commandBuffers.size();
 
-		if (vkAllocateCommandBuffers(device, &allocInfo, mdl.second.commandBuffers.data()) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate command buffers!");
+	if (vkAllocateCommandBuffers(device, &allocInfo, loadedModels.at(id).commandBuffers.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate command buffers!");
+	}
+
+	for (size_t i = 0; i < loadedModels.at(id).commandBuffers.size(); i++) {
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		if (vkBeginCommandBuffer(loadedModels.at(id).commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+			throw std::runtime_error("failed to begin recording command buffer!");
 		}
 
-		for (size_t i = 0; i < mdl.second.commandBuffers.size(); i++) {
-			VkCommandBufferBeginInfo beginInfo = {};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.framebuffer = swapChainFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = swapChainExtent;
 
-			if (vkBeginCommandBuffer(mdl.second.commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-				throw std::runtime_error("failed to begin recording command buffer!");
-			}
+		std::array<VkClearValue, 2> clearValues = {};
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
 
-			VkRenderPassBeginInfo renderPassInfo = {};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = renderPass;
-			renderPassInfo.framebuffer = swapChainFramebuffers[i];
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = swapChainExtent;
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
 
-			std::array<VkClearValue, 2> clearValues = {};
-			clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-			clearValues[1].depthStencil = { 1.0f, 0 };
+		vkCmdBeginRenderPass(loadedModels.at(id).commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
+		vkCmdBindPipeline(loadedModels.at(id).commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-			vkCmdBeginRenderPass(mdl.second.commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		VkBuffer vertexBuffers[] = { loadedModels.at(id).vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(loadedModels.at(id).commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
-			vkCmdBindPipeline(mdl.second.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+		vkCmdBindIndexBuffer(loadedModels.at(id).commandBuffers[i], loadedModels.at(id).indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-			VkBuffer vertexBuffers[] = { mdl.second.vertexBuffer };
-			VkDeviceSize offsets[] = { 0 };
-			vkCmdBindVertexBuffers(mdl.second.commandBuffers[i], 0, 1, vertexBuffers, offsets);
+		vkCmdBindDescriptorSets(loadedModels.at(id).commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &loadedModels.at(id).descriptorSets[i], 0, nullptr);
 
-			vkCmdBindIndexBuffer(mdl.second.commandBuffers[i], mdl.second.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdDrawIndexed(loadedModels.at(id).commandBuffers[i], static_cast<uint32_t>(loadedModels.at(id).indices.size()), 1, 0, 0, 0);
 
-			vkCmdBindDescriptorSets(mdl.second.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &mdl.second.descriptorSets[i], 0, nullptr);
+		vkCmdEndRenderPass(loadedModels.at(id).commandBuffers[i]);
 
-			vkCmdDrawIndexed(mdl.second.commandBuffers[i], static_cast<uint32_t>(mdl.second.indices.size()), 1, 0, 0, 0);
-
-			vkCmdEndRenderPass(mdl.second.commandBuffers[i]);
-
-			if (vkEndCommandBuffer(mdl.second.commandBuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to record command buffer!");
-			}
+		if (vkEndCommandBuffer(loadedModels.at(id).commandBuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to record command buffer!");
 		}
 	}
 }
@@ -1429,11 +1446,13 @@ void VulkanHandler::drawFrame() {
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 
-	submitInfo.commandBufferCount = loadedModels.size();
 	std::vector<VkCommandBuffer> tmpCmdBuffers;
 	for (auto& mdl : loadedModels) {
-		tmpCmdBuffers.push_back(mdl.second.commandBuffers[imageIndex]);
+		if (!mdl.second.queued_for_destruction) {
+			tmpCmdBuffers.push_back(mdl.second.commandBuffers[imageIndex]);
+		}
 	}
+	submitInfo.commandBufferCount = tmpCmdBuffers.size();
 	submitInfo.pCommandBuffers = &tmpCmdBuffers[0];
 
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
@@ -1469,6 +1488,15 @@ void VulkanHandler::drawFrame() {
 	}
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+
+	for (auto itr = loadedModels.begin(); itr != loadedModels.end();) {
+		if (itr->second.queued_for_destruction) {
+			destroyModelAtFrame(itr++->first, imageIndex);
+		}
+		else {
+			++itr;
+		}
+	}
 }
 
 VkShaderModule VulkanHandler::createShaderModule(const std::vector<char>& code) {
