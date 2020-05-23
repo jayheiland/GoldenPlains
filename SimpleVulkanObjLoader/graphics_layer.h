@@ -16,7 +16,7 @@ private:
 public:
 	GraphicsLayer();
 	void init(std::string vertShdrPath, std::string fragShdrPath);
-	Model_ID createModel(std::string modelPath, Texture_ID texture_id);
+	Model_ID createModel(std::string modelPath, Texture_ID texture_id, glm::vec3 pos);
 	Model_ID duplicateModel(Model_ID original_model_id);
 	void destroyModel(Model_ID model_id);
 	Texture_ID createTexture(std::string texturePath);

@@ -16,9 +16,9 @@ void GraphicsLayer::init(std::string vertShdrPath, std::string fragShdrPath)
 	}
 }
 
-Model_ID GraphicsLayer::createModel(std::string modelPath, Texture_ID texture_id)
+Model_ID GraphicsLayer::createModel(std::string modelPath, Texture_ID texture_id, glm::vec3 pos)
 {
-	vulkHandler.loadModel(id_counter, modelPath, texture_id);
+	vulkHandler.loadModel(id_counter, modelPath, texture_id, pos);
 	return id_counter++;
 }
 

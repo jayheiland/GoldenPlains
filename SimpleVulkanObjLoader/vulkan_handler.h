@@ -179,11 +179,14 @@ private:
 		std::vector<VkBuffer> uniformBuffers;
 		std::vector<VkDeviceMemory> uniformBuffersMemory;
 		std::vector<VkDescriptorSet> descriptorSets;
-		std::vector<VkCommandBuffer> commandBuffers;
+		std::vector<VkCommandBuffer> secondaryCommandBuffers;
 		uint32_t texture_id;
+
+		glm::vec3 position;
 	};
 
 	std::unordered_map<uint32_t, Model> loadedModels;
+	std::vector<VkCommandBuffer> primaryCommandBuffers;
 
 	VkDescriptorPool descriptorPool;
 
@@ -234,7 +237,7 @@ private:
 	void createVertexBuffer(uint32_t id);
 	void createIndexBuffer(uint32_t id);
 	void createUniformBuffers(uint32_t id);
-	void destroyModelAtFrame(uint32_t id, uint32_t frame);
+	void destroyModelAtFrame(uint32_t id);
 	void createDescriptorPool();
 	void createDescriptorSets(uint32_t id);
 
@@ -243,7 +246,8 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void createCommandBuffers(uint32_t id);
+	void createSecondaryCommandBuffers(uint32_t imageIndex);
+	void createPrimaryCommandBuffers(uint32_t imageIndex);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
 	void drawFrame();
@@ -265,7 +269,7 @@ private:
 public:
 	void initWindow();
 	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
-	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id);
+	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos);
 	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
 	void queueDestroyModel(uint32_t id);
 	void loadTexture(uint32_t id, std::string texturePath);
