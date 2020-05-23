@@ -12,18 +12,18 @@ int main() {
 	Model_ID model_3 = grphLayer.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -3.0f, 0.0f));
 	
 
-	//std::vector<Model_ID> duplicate_IDs;
-	//for (int idx = 0; idx < 2; idx++) {
-	//	duplicate_IDs.push_back(grphLayer.duplicateModel(model_1));
-	//}
+	std::vector<Model_ID> duplicate_IDs;
+	for (int idx = 0; idx < 2; idx++) {
+		duplicate_IDs.push_back(grphLayer.duplicateModel(model_1));
+	}
 
-	//for (int idx = 0; idx < 600; idx++) {
-	//	grphLayer.draw();
-	//}
+	for (int idx = 0; idx < 600; idx++) {
+		grphLayer.draw();
+	}
 
-	//for (int idx = 0; idx < 1; idx++) {
-	//	grphLayer.destroyModel(duplicate_IDs[idx]);
-	//}
+	for (int idx = 0; idx < 1; idx++) {
+		grphLayer.destroyModel(duplicate_IDs[idx]);
+	}
 
 	while (!grphLayer.windowShouldClose()) {
 		grphLayer.draw();

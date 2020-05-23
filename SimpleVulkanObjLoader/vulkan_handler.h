@@ -181,6 +181,7 @@ private:
 		std::vector<VkDescriptorSet> descriptorSets;
 		std::vector<VkCommandBuffer> secondaryCommandBuffers;
 		uint32_t texture_id;
+		uint32_t valid_frames; //number of frames for which this model has valid data
 
 		glm::vec3 position;
 	};
@@ -237,7 +238,7 @@ private:
 	void createVertexBuffer(uint32_t id);
 	void createIndexBuffer(uint32_t id);
 	void createUniformBuffers(uint32_t id);
-	void destroyModelAtFrame(uint32_t id);
+	void destroyModelAtFrame(uint32_t id, uint32_t imageIndex);
 	void createDescriptorPool();
 	void createDescriptorSets(uint32_t id);
 
@@ -247,7 +248,7 @@ private:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void createSecondaryCommandBuffers(uint32_t imageIndex);
-	void createPrimaryCommandBuffers(uint32_t imageIndex);
+	void createCommandBuffers(uint32_t imageIndex);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
 	void drawFrame();
