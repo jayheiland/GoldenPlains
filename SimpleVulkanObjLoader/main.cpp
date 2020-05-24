@@ -8,12 +8,11 @@ int main() {
 	Texture_ID txtr2 = grphLayer.createTexture("textures/chalet.jpg");
 
 	Model_ID model_1 = grphLayer.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 3.0f, 0.0f));
-	//Model_ID model_2 = grphLayer.createModel("models/chalet.obj", txtr2);
 	Model_ID model_3 = grphLayer.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -3.0f, 0.0f));
 	
 
 	std::vector<Model_ID> duplicate_IDs;
-	for (int idx = 0; idx < 2; idx++) {
+	for (int idx = 0; idx < 50; idx++) {
 		duplicate_IDs.push_back(grphLayer.duplicateModel(model_1));
 	}
 
@@ -21,7 +20,7 @@ int main() {
 		grphLayer.draw();
 	}
 
-	for (int idx = 0; idx < 1; idx++) {
+	for (int idx = 0; idx < 25; idx++) {
 		grphLayer.destroyModel(duplicate_IDs[idx]);
 	}
 
