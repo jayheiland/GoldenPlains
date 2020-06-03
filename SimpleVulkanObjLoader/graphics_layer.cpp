@@ -1,12 +1,8 @@
 #include "graphics_layer.h"
 
-GraphicsLayer::GraphicsLayer()
+GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 {
 	id_counter = 0;
-}
-
-void GraphicsLayer::init(std::string vertShdrPath, std::string fragShdrPath)
-{
 	try {
 		vulkHandler.initWindow();
 		vulkHandler.initVulkan(vertShdrPath, fragShdrPath);
@@ -16,30 +12,30 @@ void GraphicsLayer::init(std::string vertShdrPath, std::string fragShdrPath)
 	}
 }
 
-Model_ID GraphicsLayer::createModel(std::string modelPath, Texture_ID texture_id, glm::vec3 pos)
+Model GraphicsLayer::createModel(std::string modelPath, Texture texture_id, glm::vec3 pos)
 {
 	vulkHandler.loadModel(id_counter, modelPath, texture_id, pos);
 	return id_counter++;
 }
 
-Model_ID GraphicsLayer::duplicateModel(Model_ID original_model_id)
+Model GraphicsLayer::duplicateModel(Model original_model_id)
 {
 	vulkHandler.duplicateModel(id_counter, original_model_id);
 	return id_counter++;
 }
 
-void GraphicsLayer::destroyModel(Model_ID model_id)
+void GraphicsLayer::destroyModel(Model model_id)
 {
 	vulkHandler.queueDestroyModel(model_id);
 }
 
-Texture_ID GraphicsLayer::createTexture(std::string texturePath)
+Texture GraphicsLayer::createTexture(std::string texturePath)
 {
 	vulkHandler.loadTexture(id_counter, texturePath);
 	return id_counter++;
 }
 
-void GraphicsLayer::setTextureForModel(Texture_ID texture_id, Model_ID model_id)
+void GraphicsLayer::setTextureForModel(Texture texture_id, Model model_id)
 {
 	vulkHandler.setTextureForModel(texture_id, model_id);
 }
@@ -71,4 +67,8 @@ void GraphicsLayer::cleanup()
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}
+}
+
+Object3D::Object3D(GraphicsLayer& graphicsLayer) {
+
 }
