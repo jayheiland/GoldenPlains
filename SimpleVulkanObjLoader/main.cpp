@@ -1,32 +1,29 @@
 #include "graphics_layer.h"
 
 int main() {
-	GraphicsLayer grphLayer;
+	GraphicsLayer grphLyr("./shaders/vert.spv", "./shaders/frag.spv");
 
-	grphLayer.init("./shaders/vert.spv", "./shaders/frag.spv");
-	Texture_ID txtr = grphLayer.createTexture("textures/viking_room.png");
-	Texture_ID txtr2 = grphLayer.createTexture("textures/chalet.jpg");
+	Texture txtr = grphLyr.createTexture("textures/viking_room.png");
 
-	Model_ID model_1 = grphLayer.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 3.0f, 0.0f));
-	//Model_ID model_2 = grphLayer.createModel("models/chalet.obj", txtr2);
-	Model_ID model_3 = grphLayer.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -3.0f, 0.0f));
-	
+	Model model_1 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 3.0f, 0.0f));
+	Model model_3 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -3.0f, 0.0f));	
 
-	std::vector<Model_ID> duplicate_IDs;
-	for (int idx = 0; idx < 2; idx++) {
-		duplicate_IDs.push_back(grphLayer.duplicateModel(model_1));
+	int stressTestModelCount = 50;
+	std::vector<Model> duplicate_IDs;
+	for (int idx = 0; idx < stressTestModelCount; idx++) {
+		duplicate_IDs.push_back(grphLyr.duplicateModel(model_1));
 	}
 
 	for (int idx = 0; idx < 600; idx++) {
-		grphLayer.draw();
+		grphLyr.draw();
 	}
 
-	for (int idx = 0; idx < 1; idx++) {
-		grphLayer.destroyModel(duplicate_IDs[idx]);
+	for (int idx = 0; idx < stressTestModelCount/2; idx++) {
+		grphLyr.destroyModel(duplicate_IDs[idx]);
 	}
 
-	while (!grphLayer.windowShouldClose()) {
-		grphLayer.draw();
+	while (!grphLyr.windowShouldClose()) {
+		grphLyr.draw();
 	}
-	grphLayer.cleanup();
+	grphLyr.cleanup();
 }

@@ -187,7 +187,7 @@ private:
 	};
 
 	std::unordered_map<uint32_t, Model> loadedModels;
-	std::vector<VkCommandBuffer> primaryCommandBuffers;
+	std::vector <VkCommandBuffer> primaryCommandBuffers;
 
 	VkDescriptorPool descriptorPool;
 
@@ -247,8 +247,10 @@ private:
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-	void createSecondaryCommandBuffers(uint32_t imageIndex);
-	void createCommandBuffers(uint32_t imageIndex);
+	void createSecondaryCommandBuffers(uint32_t id);
+	void createPrimaryCommandBuffers();
+	void recordSecondaryCommandBuffers(uint32_t imageIndex);
+	void recordCommandBuffers(uint32_t imageIndex);
 	void createSyncObjects();
 	void updateUniformBuffer(uint32_t currentImage);
 	void drawFrame();
