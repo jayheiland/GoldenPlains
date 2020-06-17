@@ -3,9 +3,6 @@
 
 #include "vulkan_handler.h"
 
-
-
-
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
@@ -19,10 +16,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-
-
-
 
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -41,12 +34,6 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 		func(instance, debugMessenger, pAllocator);
 	}
 }
-
-
-
-
-
-
 
 
 void VulkanHandler::initWindow() {
@@ -77,19 +64,9 @@ void VulkanHandler::initVulkan(std::string vertShdrPath, std::string fragShdrPat
 	createColorResources();
 	createDepthResources();
 	createFramebuffers();
-
-	/*createTextureImage();
-	createTextureImageView();*/
 	createTextureSampler();
-	/*loadModel();
-	createVertexBuffer();
-	createIndexBuffer();
-	createUniformBuffers();*/
 	createDescriptorPool();
-	/*createDescriptorSets();
-	createCommandBuffers();*/
 	createPrimaryCommandBuffers();
-
 	createSyncObjects();
 }
 
@@ -202,9 +179,7 @@ void VulkanHandler::recreateSwapChain() {
 	}
 
 	vkDeviceWaitIdle(device);
-
 	cleanupSwapChain();
-
 	createSwapChain();
 	createImageViews();
 	createRenderPass();
@@ -1065,15 +1040,12 @@ void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t textu
 	newModel.queued_for_destruction = false;
 	newModel.position = pos;
 	newModel.valid_frames = (uint32_t)swapChainImages.size();
-
 	loadedModels.insert(std::make_pair(id, newModel));
 
 	createVertexBuffer(id);
 	createIndexBuffer(id);
-
 	createUniformBuffers(id);
 	createDescriptorSets(id);
-
 	createSecondaryCommandBuffers(id);
 }
 
@@ -1140,10 +1112,8 @@ void VulkanHandler::duplicateModel(uint32_t duplicate_id, uint32_t original_id) 
 
 	createVertexBuffer(duplicate_id);
 	createIndexBuffer(duplicate_id);
-
 	createUniformBuffers(duplicate_id);
 	createDescriptorSets(duplicate_id);
-
 	createSecondaryCommandBuffers(duplicate_id);
 }
 
@@ -1165,20 +1135,32 @@ void VulkanHandler::destroyModelAtFrame(uint32_t id, uint32_t imageIndex) {
 	}
 }
 
+void VulkanHandler::destroyTexture(uint32_t id)
+{
+	for (auto& mdl : loadedModels) {
+		if (mdl.second.texture_id == id) {
+			std::cout << "WARNING: Cannot destroy Texture; associated model(s) have not yet been destroyed" << std::endl;
+			return;
+		}
+	}
+	vkDestroyImageView(device, loadedTextures.at(id).textureImageView, nullptr);
+	vkDestroyImage(device, loadedTextures.at(id).textureImage, nullptr);
+	vkFreeMemory(device, loadedTextures.at(id).textureImageMemory, nullptr);
+	loadedTextures.erase(id);
+}
+
 void VulkanHandler::createDescriptorPool() {
-	//descriptor count i.e. descriptor pool size must be greater than 0
-	uint32_t descriptorCount = DESCRIPTOR_POOL_SIZE;
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = static_cast<uint32_t>(descriptorCount);
+	poolSizes[0].descriptorCount = static_cast<uint32_t>( DESCRIPTOR_POOL_SIZE);
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(descriptorCount);
+	poolSizes[1].descriptorCount = static_cast<uint32_t>(DESCRIPTOR_POOL_SIZE);
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(descriptorCount);
+	poolInfo.maxSets = static_cast<uint32_t>(DESCRIPTOR_POOL_SIZE);
 
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
@@ -1198,9 +1180,9 @@ void VulkanHandler::createDescriptorSets(uint32_t id) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
+	for (size_t idx = 0; idx < swapChainImages.size(); idx++) {
 		VkDescriptorBufferInfo bufferInfo = {};
-		bufferInfo.buffer = loadedModels.at(id).uniformBuffers[i];
+		bufferInfo.buffer = loadedModels.at(id).uniformBuffers[idx];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -1212,7 +1194,7 @@ void VulkanHandler::createDescriptorSets(uint32_t id) {
 		std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = loadedModels.at(id).descriptorSets[i];
+		descriptorWrites[0].dstSet = loadedModels.at(id).descriptorSets[idx];
 		descriptorWrites[0].dstBinding = 0;
 		descriptorWrites[0].dstArrayElement = 0;
 		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1220,7 +1202,7 @@ void VulkanHandler::createDescriptorSets(uint32_t id) {
 		descriptorWrites[0].pBufferInfo = &bufferInfo;
 
 		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].dstSet = loadedModels.at(id).descriptorSets[i];
+		descriptorWrites[1].dstSet = loadedModels.at(id).descriptorSets[idx];
 		descriptorWrites[1].dstBinding = 1;
 		descriptorWrites[1].dstArrayElement = 0;
 		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1233,6 +1215,13 @@ void VulkanHandler::createDescriptorSets(uint32_t id) {
 
 void VulkanHandler::setTextureForModel(uint32_t texture_id, uint32_t model_id) {
 	loadedModels.at(model_id).texture_id = texture_id;
+	createDescriptorSets(model_id);
+	createSecondaryCommandBuffers(model_id);
+}
+
+void VulkanHandler::setModelPosition(uint32_t id, glm::vec3 pos)
+{
+	loadedModels.at(id).position = pos;
 }
 
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1470,7 +1459,7 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 		//translate the model
 		ubo.model = glm::translate(ubo.model, mdl.second.position);
 
-		ubo.view = glm::lookAt(glm::vec3(4.0f, 4.0f, 4.0f), glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		ubo.view = glm::lookAt(glm::vec3(4.0f, 1.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
 		ubo.proj[1][1] *= -1;
 

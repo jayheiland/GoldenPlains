@@ -18,16 +18,15 @@ public:
 	Model createModel(std::string modelPath, Texture texture_id, glm::vec3 pos);
 	Model duplicateModel(Model original_model_id);
 	void destroyModel(Model model_id);
+	void destroyTexture(Texture texture_id);
+	void setModelPosition(Model model_id, glm::vec3 pos);
+
 	Texture createTexture(std::string texturePath);
 	void setTextureForModel(Texture texture_id, Model model_id);
+
 	void draw();
 	bool windowShouldClose();
 	void cleanup();
-};
-
-class Object3D {
-public:
-	Object3D(GraphicsLayer& graphicsLayer);
 };
 
 #endif

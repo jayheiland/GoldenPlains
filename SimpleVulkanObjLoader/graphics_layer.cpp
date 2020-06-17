@@ -29,6 +29,15 @@ void GraphicsLayer::destroyModel(Model model_id)
 	vulkHandler.queueDestroyModel(model_id);
 }
 
+void GraphicsLayer::destroyTexture(Texture texture_id) {
+	vulkHandler.destroyTexture(texture_id);
+}
+
+void GraphicsLayer::setModelPosition(Model model_id, glm::vec3 pos)
+{
+	vulkHandler.setModelPosition(model_id, pos);
+}
+
 Texture GraphicsLayer::createTexture(std::string texturePath)
 {
 	vulkHandler.loadTexture(id_counter, texturePath);
@@ -67,8 +76,4 @@ void GraphicsLayer::cleanup()
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}
-}
-
-Object3D::Object3D(GraphicsLayer& graphicsLayer) {
-
 }

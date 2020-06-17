@@ -120,7 +120,7 @@ private:
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
-	const int DESCRIPTOR_POOL_SIZE = 300;
+	const int DESCRIPTOR_POOL_SIZE = 5000;
 
 	GLFWwindow* window;
 
@@ -202,6 +202,11 @@ private:
 	std::string vertShdrPath;
 	std::string fragShdrPath;
 
+	struct Camera {
+		glm::vec3 position;
+		glm::vec3 target;
+	};
+
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void cleanupSwapChain();
@@ -275,8 +280,10 @@ public:
 	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos);
 	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
 	void queueDestroyModel(uint32_t id);
+	void destroyTexture(uint32_t id);
 	void loadTexture(uint32_t id, std::string texturePath);
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
+	void setModelPosition(uint32_t id, glm::vec3 pos);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();
