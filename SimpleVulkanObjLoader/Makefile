@@ -16,10 +16,13 @@ VulkanTest: main.cpp graphics_layer.cpp vulkan_handler.cpp
 #vulkan_handler.o: vulkan_handler.cpp
 #	$(CXX) -o $@ -c $^
 
-.PHONY: test clean
+.PHONY: test clean debug
 
 test: VulkanTest
 	LD_LIBRARY_PATH=$(VULKAN_SDK_PATH)/lib VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d ./VulkanTest
+
+debug: VulkanTest
+	LD_LIBRARY_PATH=$(VULKAN_SDK_PATH)/lib VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d gdb VulkanTest
 
 clean:
 	rm VulkanTest

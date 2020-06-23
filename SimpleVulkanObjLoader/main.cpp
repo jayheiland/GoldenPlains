@@ -9,10 +9,12 @@ int main() {
 	Model model_1 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 4.0f, 0.0f));
 	Model model_2 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -4.0f, 0.0f));	
 
-	int stressTestModelCount = 100;
+	int stressTestModelCount = 2;
 	std::vector<Model> duplicate_IDs;
 	for (int idx = 0; idx < stressTestModelCount; idx++) {
-		duplicate_IDs.push_back(grphLyr.duplicateModel(model_1));
+		Model dup = grphLyr.duplicateModel(model_1);
+		grphLyr.setModelPosition(dup, glm::vec3(0.0f, (idx - (stressTestModelCount * 0.5)) * 0.01, 0.0f));
+		duplicate_IDs.push_back(dup);
 	}
 
 	for (int idx = 0; idx < 250; idx++) {

@@ -243,7 +243,6 @@ private:
 	void createVertexBuffer(uint32_t id);
 	void createIndexBuffer(uint32_t id);
 	void createUniformBuffers(uint32_t id);
-	void destroyModelAtFrame(uint32_t id, uint32_t imageIndex);
 	void createDescriptorPool();
 	void createDescriptorSets(uint32_t id);
 

@@ -195,6 +195,13 @@ void VulkanHandler::recreateSwapChain() {
 	for (auto mdl : loadedModels) {
 		createDescriptorSets(mdl.first);
 	}
+	createPrimaryCommandBuffers();
+	for (auto mdl : loadedModels) {
+		createSecondaryCommandBuffers(mdl.first);
+	}
+	for(int imageIndex = 0; imageIndex < swapChainImages.size(); imageIndex++){
+		recordCommandBuffers(imageIndex);
+	}
 }
 
 void VulkanHandler::createInstance() {
@@ -1121,20 +1128,6 @@ void VulkanHandler::queueDestroyModel(uint32_t id) {
 	loadedModels.at(id).queued_for_destruction = true;
 }
 
-void VulkanHandler::destroyModelAtFrame(uint32_t id, uint32_t imageIndex) {
-	vkFreeCommandBuffers(device, commandPool, 1, &loadedModels.at(id).secondaryCommandBuffers[imageIndex]);
-	vkDestroyBuffer(device, loadedModels.at(id).uniformBuffers[imageIndex], nullptr);
-	vkFreeMemory(device, loadedModels.at(id).uniformBuffersMemory[imageIndex], nullptr);
-	loadedModels.at(id).valid_frames--;
-	if (loadedModels.at(id).valid_frames <= 0) {
-		vkDestroyBuffer(device, loadedModels.at(id).indexBuffer, nullptr);
-		vkFreeMemory(device, loadedModels.at(id).indexBufferMemory, nullptr);
-		vkDestroyBuffer(device, loadedModels.at(id).vertexBuffer, nullptr);
-		vkFreeMemory(device, loadedModels.at(id).vertexBufferMemory, nullptr);
-		loadedModels.erase(id);
-	}
-}
-
 void VulkanHandler::destroyTexture(uint32_t id)
 {
 	for (auto& mdl : loadedModels) {
@@ -1307,7 +1300,6 @@ uint32_t VulkanHandler::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlag
 }
 
 void VulkanHandler::createSecondaryCommandBuffers(uint32_t id) {
-	//vkFreeCommandBuffers(device, commandPool, secondaryCommandBuffers[imageIndex].size(), secondaryCommandBuffers[imageIndex].data());
 	loadedModels.at(id).secondaryCommandBuffers.resize(swapChainImages.size());
 
 	VkCommandBufferAllocateInfo secondaryAllocInfo = {};
@@ -1322,7 +1314,6 @@ void VulkanHandler::createSecondaryCommandBuffers(uint32_t id) {
 }
 
 void VulkanHandler::createPrimaryCommandBuffers() {
-	//vkFreeCommandBuffers(device, commandPool, 1, &primaryCommandBuffers[imageIndex]);
 	primaryCommandBuffers.resize(swapChainImages.size());
 
 	VkCommandBufferAllocateInfo primaryAllocInfo = {};
@@ -1453,20 +1444,22 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	for (auto& mdl : loadedModels) {
-		UniformBufferObject ubo = {};
-		//rotate the model
-		ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		//translate the model
-		ubo.model = glm::translate(ubo.model, mdl.second.position);
+		if(!mdl.second.queued_for_destruction){
+			UniformBufferObject ubo = {};
+			//rotate the model
+			ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			//translate the model
+			ubo.model = glm::translate(ubo.model, mdl.second.position);
 
-		ubo.view = glm::lookAt(glm::vec3(4.0f, 1.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
-		ubo.proj[1][1] *= -1;
+			ubo.view = glm::lookAt(glm::vec3(4.0f, 1.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+			ubo.proj[1][1] *= -1;
 
-		void* data;
-		vkMapMemory(device, mdl.second.uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-		memcpy(data, &ubo, sizeof(ubo));
-		vkUnmapMemory(device, mdl.second.uniformBuffersMemory[currentImage]);
+			void* data;
+			vkMapMemory(device, mdl.second.uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+			memcpy(data, &ubo, sizeof(ubo));
+			vkUnmapMemory(device, mdl.second.uniformBuffersMemory[currentImage]);
+		}
 	}
 }
 
@@ -1539,9 +1532,26 @@ void VulkanHandler::drawFrame() {
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-	for (auto& mdl : loadedModels) {
-		if (mdl.second.queued_for_destruction) {
-			destroyModelAtFrame(mdl.first, imageIndex);
+	for(auto itr = loadedModels.begin(); itr != loadedModels.end();) {
+		bool modelDestroyed = false;
+		if (itr->second.queued_for_destruction) {
+			itr->second.valid_frames--;
+			if (itr->second.valid_frames <= 0) {
+				vkFreeCommandBuffers(device, commandPool, itr->second.secondaryCommandBuffers.size(), itr->second.secondaryCommandBuffers.data());
+				for(int idx = 0; idx < swapChainImages.size(); idx++){
+					vkDestroyBuffer(device, itr->second.uniformBuffers[idx], nullptr);
+					vkFreeMemory(device, itr->second.uniformBuffersMemory[idx], nullptr);
+				}
+				vkDestroyBuffer(device, itr->second.indexBuffer, nullptr);
+				vkFreeMemory(device, itr->second.indexBufferMemory, nullptr);
+				vkDestroyBuffer(device, itr->second.vertexBuffer, nullptr);
+				vkFreeMemory(device, itr->second.vertexBufferMemory, nullptr);
+				itr = loadedModels.erase(itr);
+				modelDestroyed = true;
+			}
+		}
+		if(!modelDestroyed){
+			itr++;
 		}
 	}
 }
