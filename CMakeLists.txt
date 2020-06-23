@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+project(goldenplains)
+add_library(goldenplains SHARED src/vulkan_handler.cpp src/golden_plains.cpp)
+install(TARGETS goldenplains DESTINATION lib)
+install(FILES src/golden_plains.h DESTINATION include)

@@ -1,4 +1,4 @@
-#include "graphics_layer.h"
+#include "golden_plains.h"
 
 GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 {

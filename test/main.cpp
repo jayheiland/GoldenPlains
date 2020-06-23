@@ -1,4 +1,4 @@
-#include "graphics_layer.h"
+#include "golden_plains.h"
 
 int main() {
 	GraphicsLayer grphLyr("./shaders/vert.spv", "./shaders/frag.spv");
@@ -9,7 +9,7 @@ int main() {
 	Model model_1 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 4.0f, 0.0f));
 	Model model_2 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -4.0f, 0.0f));	
 
-	int stressTestModelCount = 2;
+	int stressTestModelCount = 1000;
 	std::vector<Model> duplicate_IDs;
 	for (int idx = 0; idx < stressTestModelCount; idx++) {
 		Model dup = grphLyr.duplicateModel(model_1);
