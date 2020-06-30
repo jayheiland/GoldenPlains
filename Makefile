@@ -1,25 +1,23 @@
-VULKAN_SDK_PATH = /home/jay/Loft/VulkanSDK/1.2.135.0/x86_64
+VULKAN_SDK_INCLUDE_PATH = /usr/include/vulkan
+VULKAN_SDK_LIB_PATH = /usr/lib/x86_64-linux-gnu
+VULKAN_SDK_VLD_LAYER_PATH = /usr/share/vulkan/explicit_layer.d
 
 LIB = ./lib
 INC = ./include
 SRC = ./src
 CXX = g++ -std=c++17
-CFLAGS = -I/home/jay/Loft/stb-master -I/home/jay/Loft/tinyobjloader-master -I$(VULKAN_SDK_PATH)/include
-LDFLAGS = -L$(VULKAN_SDK_PATH)/lib `pkg-config --static --libs glfw3` -lvulkan
+CFLAGS = -I/home/jay/Loft/stb-master -I/home/jay/Loft/tinyobjloader-master -I$(VULKAN_SDK_INCLUDE_PATH)
+LDFLAGS = -L$(VULKAN_SDK_LIB_PATH) `pkg-config --static --libs glfw3` -lvulkan
 
 lib: $(SRC)/golden_plains.cpp $(SRC)/vulkan_handler.cpp
 	$(CXX) -c $(SRC)/vulkan_handler.cpp -fpic $(CFLAGS) $(LDFLAGS)
 	$(CXX) -c $(SRC)/golden_plains.cpp -fpic $(CFLAGS)
-	sudo cp $(VULKAN_SDK_PATH)/lib/libvulkan.so /usr/local/lib/
-	sudo cp $(VULKAN_SDK_PATH)/lib/libVkLayer*.so /usr/local/lib/
 	sudo g++ -shared -o /usr/local/lib/libgoldenplains.so *.o
 	sudo ldconfig
 
 lib_debug: $(SRC)/golden_plains.cpp $(SRC)/vulkan_handler.cpp
 	$(CXX) -g -c $(SRC)/vulkan_handler.cpp -fpic $(CFLAGS) $(LDFLAGS)
 	$(CXX) -g -c $(SRC)/golden_plains.cpp -fpic $(CFLAGS)
-	sudo cp $(VULKAN_SDK_PATH)/lib/libvulkan.so /usr/local/lib/
-	sudo cp $(VULKAN_SDK_PATH)/lib/libVkLayer*.so /usr/local/lib/
 	sudo g++ -shared -o /usr/local/lib/libgoldenplains.so *.o
 	sudo ldconfig
 
@@ -27,10 +25,10 @@ test: ./test/main.cpp
 	$(CXX) -g -o gptest ./test/main.cpp $(CFLAGS) -I$(SRC) -lgoldenplains $(LDFLAGS)
 
 run_test: gptest
-	VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d ./gptest
+	VK_LAYER_PATH=$(VULKAN_SDK_VLD_LAYER_PATH) ./gptest
 
 debug_test: gptest
-	VK_LAYER_PATH=$(VULKAN_SDK_PATH)/etc/vulkan/explicit_layer.d gdb gptest
+	VK_LAYER_PATH=$(VULKAN_SDK_VLD_LAYER_PATH) lldb gptest
 
 no_lib:
 	$(CXX) -c $(SRC)/vulkan_handler.cpp $(CFLAGS) $(LDFLAGS)

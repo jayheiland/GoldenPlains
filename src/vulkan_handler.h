@@ -115,6 +115,8 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 class VulkanHandler {
 private:
+	const bool enableValidationLayers = false;
+
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
 
