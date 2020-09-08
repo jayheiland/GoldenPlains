@@ -4,7 +4,6 @@ int main() {
 	GraphicsLayer grphLyr("./shaders/vert.spv", "./shaders/frag.spv");
 
 	Texture txtr = grphLyr.createTexture("textures/viking_room.png");
-	Texture txtr2 = grphLyr.createTexture("textures/aggelos.jpeg");
 
 	Model model_1 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 4.0f, 0.0f));
 	Model model_2 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, -4.0f, 0.0f));	

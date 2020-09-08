@@ -1,0 +1,8 @@
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/install/strip.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/install/local.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/list_install_components.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/rebuild_cache.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/install.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/goldenplains.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/gptest.dir
+/home/jay/Projects/SimpleVulkanObjLoader/CMakeFiles/edit_cache.dir

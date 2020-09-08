@@ -123,8 +123,6 @@ private:
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	const int DESCRIPTOR_POOL_SIZE = 5000;
-	const double DESCRIPTOR_POOL_GROWTH_THRESHOLD = 0.9;
-	const double DESCRIPTOR_POOL_SHRINKAGE_THRESHOLD = 0.4;
 
 	GLFWwindow* window;
 
