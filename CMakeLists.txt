@@ -13,15 +13,15 @@ find_package(glfw3 3.3 REQUIRED)
 message(STATUS "Found GLFW3 in ${glfw3_CONFIG}")
 
 # STB_IMAGE
-add_library(STB_IMAGE INTERFACE)
-target_include_directories(STB_IMAGE INTERFACE /home/jay/Loft/stb-master/) 
+set(STB_IMAGE_DIR "value" CACHE STRING "Path to required header-only library stb_image.h")
+message(STATUS "The given directory of stb_image is ${STB_IMAGE_DIR}")
 
 # TINY_OBJ_LOADER
-add_library(TINY_OBJ_LOADER INTERFACE)
-target_include_directories(TINY_OBJ_LOADER INTERFACE /home/jay/Loft/tinyobjloader-master/) 
+find_package(tinyobjloader REQUIRED)
+message(STATUS "Found TinyObjLoader in ${tinyobjloader_CONFIG}")
 
-set(LIBS glfw ${glm_LIBRARIES} ${Vulkan_LIBRARIES} STB_IMAGE TINY_OBJ_LOADER)
-set(INC src ${glfw3_INCLUDE_DIR} ${glm_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} /home/jay/Loft/stb-master/ /home/jay/Loft/tinyobjloader-master/ )
+set(LIBS glfw ${glm_LIBRARIES} ${Vulkan_LIBRARIES})
+set(INC src ${glfw3_INCLUDE_DIR} ${glm_INCLUDE_DIR} ${Vulkan_INCLUDE_DIR} ${STB_IMAGE_DIR} ${tinyobjloader_INCLUDE_DIR})
 
 add_library(goldenplains SHARED src/vulkan_handler.cpp src/golden_plains.cpp)
 set_property(TARGET goldenplains PROPERTY CXX_STANDARD 17)
@@ -31,7 +31,6 @@ install(TARGETS goldenplains DESTINATION lib)
 install(FILES src/golden_plains.h DESTINATION include)
 
 add_executable(gptest test/main.cpp)
-target_include_directories(gptest PUBLIC ${INC}) 
-target_link_libraries(gptest goldenplains ${LIBS})
+target_link_libraries(gptest goldenplains)
 set_property(TARGET gptest PROPERTY CXX_STANDARD 17)
-install(TARGETS gptest DESTINATION bin)
+#install(TARGETS gptest DESTINATION bin)

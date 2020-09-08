@@ -1,1 +1,0 @@
-/usr/bin/c++     CMakeFiles/gptest.dir/test/main.cpp.o  -o gptest -Wl,-rpath,/home/jay/Projects/SimpleVulkanObjLoader: libgoldenplains.so /usr/local/lib/libglfw3.a /usr/lib/x86_64-linux-gnu/libvulkan.so /usr/lib/x86_64-linux-gnu/librt.so -lm -ldl /usr/lib/x86_64-linux-gnu/libX11.so -lpthread 
