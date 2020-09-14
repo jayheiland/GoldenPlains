@@ -2,13 +2,45 @@
 
 An .obj file loader using Vulkan.
 
-## Installation
+## Setup
 
-### Ubuntu
+### Linux (tested on Ubuntu)
+
+- Install VulkanSDK from LunarG
+Download and install <a href="https://vulkan.lunarg.com" target="_blank">LunarG's Vulkan SDK</a>.
+
+- Install GLFW
+Download and unzip the <a href="https://github.com/glfw/glfw" target="_blank">GLFW source code</a>. In the unzipped source directory, do:
+```shell
+$ cmake .
+$ make
+$ sudo cmake -P cmake_install.cmake
+```
+
+- Install GLM
+Download and unzip the <a href="https://glm.g-truc.net" target="_blank">GLM source code</a>. In the unzipped source directory, do:
+```shell
+$ cmake .
+$ make
+$ sudo cmake -P cmake_install.cmake
+```
+
+- Install TinyObjLoader
+Download and unzip the <a href="https://github.com/tinyobjloader/tinyobjloader" target="_blank">tinyobjloader source code</a>. In the unzipped source directory, do:
+```shell
+$ cmake .
+$ make
+$ sudo cmake -P cmake_install.cmake
+```
+
+- Install STB (only stb_image.h)
+Download and unzip the <a href="https://github.com/tinyobjloader/tinyobjloader" target="_blank">tinyobjloader source code</a>. Note the path to this source directory (containing stb_image.h).
+
+- Install GoldenPlains
+Download and unzip GoldenPlains. In the unzipped source directory, do:
 
 ```shell
 $ cmake -DSTB_IMAGE_DIR=/path/to/stb_image/directory .
 $ make
+$ sudo cmake -P cmake_install.cmake
 ```
-
-### Windows
