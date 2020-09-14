@@ -2,9 +2,7 @@
 
 An .obj file loader using Vulkan.
 
-## Setup
-
-### Linux (tested on Ubuntu)
+## Linux Setup (tested on Ubuntu)
 
 #### Install VulkanSDK from LunarG
 Download and install <a href="https://vulkan.lunarg.com" target="_blank">LunarG's Vulkan SDK</a>.
