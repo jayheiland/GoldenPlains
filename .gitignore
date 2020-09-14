@@ -1,5 +1,1 @@
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
-SimpleVulkanObjLoader/x64/*
 *.spv

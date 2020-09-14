@@ -1,0 +1,4 @@
+Rework the way models are deleted; disinclude model resources from the swapchain with each frame draw, then delete the models resources all at once
+
+Look into supporting GLTF
+Look into writing an model file loader and image loader, for less reliance on third party libraries
