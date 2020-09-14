@@ -31,7 +31,7 @@ $ make
 $ sudo cmake -P cmake_install.cmake
 ```
 
-#### Install STB (only stb_image.h)
+#### Install STB
 Download and unzip the <a href="https://github.com/nothings/stb" target="_blank">STB source code</a>. Copy the path to this source directory (containing stb_image.h).
 
 #### Install GoldenPlains
