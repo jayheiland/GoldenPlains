@@ -32,7 +32,7 @@ $ sudo cmake -P cmake_install.cmake
 ```
 
 #### Install STB (only stb_image.h)
-Download and unzip the <a href="https://github.com/tinyobjloader/tinyobjloader" target="_blank">tinyobjloader source code</a>. Note the path to this source directory (containing stb_image.h).
+Download and unzip the <a href="https://github.com/nothings/stb" target="_blank">STB source code</a>. Copy the path to this source directory (containing stb_image.h).
 
 #### Install GoldenPlains
 Download and unzip GoldenPlains. In the unzipped source directory, do:
