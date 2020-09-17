@@ -122,7 +122,7 @@ private:
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
-	const int DESCRIPTOR_POOL_SIZE = 5000;
+	const int DESCRIPTOR_POOL_SIZE = 9000;
 
 	GLFWwindow* window;
 
@@ -205,9 +205,11 @@ private:
 	std::string fragShdrPath;
 
 	struct Camera {
-		glm::vec3 position;
-		glm::vec3 target;
+		glm::vec3 cameraPos;
+		glm::vec3 targetPos;
 	};
+
+	Camera camera;
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
@@ -285,6 +287,7 @@ public:
 	void loadTexture(uint32_t id, std::string texturePath);
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
 	void setModelPosition(uint32_t id, glm::vec3 pos);
+	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();

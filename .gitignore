@@ -1,1 +1,5 @@
 *.spv
+*.obj
+*.bmp
+*.png
+.vscode

@@ -1212,9 +1212,13 @@ void VulkanHandler::setTextureForModel(uint32_t texture_id, uint32_t model_id) {
 	createSecondaryCommandBuffers(model_id);
 }
 
-void VulkanHandler::setModelPosition(uint32_t id, glm::vec3 pos)
-{
+void VulkanHandler::setModelPosition(uint32_t id, glm::vec3 pos){
 	loadedModels.at(id).position = pos;
+}
+
+void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
+	camera.cameraPos = cameraPos;
+	camera.targetPos = targetPos;
 }
 
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1447,12 +1451,13 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 		if(!mdl.second.queued_for_destruction){
 			UniformBufferObject ubo = {};
 			//rotate the model
-			ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+			ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 			//translate the model
 			ubo.model = glm::translate(ubo.model, mdl.second.position);
 
-			ubo.view = glm::lookAt(glm::vec3(4.0f, 1.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.0f);
+			ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
+			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 50.0f);
 			ubo.proj[1][1] *= -1;
 
 			void* data;
