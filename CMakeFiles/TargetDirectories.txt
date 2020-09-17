@@ -1,9 +1,0 @@
-/home/jay/Projects/GoldenPlains/CMakeFiles/install/strip.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/install/local.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/basic.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/edit_cache.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/install.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/goldenplains.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/stress.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/rebuild_cache.dir
-/home/jay/Projects/GoldenPlains/CMakeFiles/list_install_components.dir
