@@ -20,6 +20,7 @@ public:
 	void destroyModel(Model model_id);
 	void destroyTexture(Texture texture_id);
 	void setModelPosition(Model model_id, glm::vec3 pos);
+	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 
 	Texture createTexture(std::string texturePath);
 	void setTextureForModel(Texture texture_id, Model model_id);

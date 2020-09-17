@@ -3,6 +3,7 @@ project(goldenplains)
 
 # Vulkan
 find_package(Vulkan REQUIRED)
+message(STATUS "Found Vulkan libraries in ${Vulkan_LIBRARIES}")
 
 # GLM
 find_package(glm REQUIRED)
@@ -13,7 +14,7 @@ find_package(glfw3 3.3 REQUIRED)
 message(STATUS "Found GLFW3 in ${glfw3_CONFIG}")
 
 # STB_IMAGE
-set(STB_IMAGE_DIR "value" CACHE STRING "Path to required header-only library stb_image.h")
+set(STB_IMAGE_DIR "ERROR: DIRECTORY NOT FOUND" CACHE STRING "Path to required header-only library stb_image.h")
 message(STATUS "The given directory of stb_image is ${STB_IMAGE_DIR}")
 
 # TINY_OBJ_LOADER
@@ -30,7 +31,12 @@ target_link_libraries(goldenplains ${LIBS})
 install(TARGETS goldenplains DESTINATION lib)
 install(FILES src/golden_plains.h DESTINATION include)
 
-add_executable(gptest test/main.cpp)
-target_link_libraries(gptest goldenplains)
-set_property(TARGET gptest PROPERTY CXX_STANDARD 17)
-#install(TARGETS gptest DESTINATION bin)
+add_executable(basic samples/basic.cpp)
+target_link_libraries(basic goldenplains)
+set_property(TARGET basic PROPERTY CXX_STANDARD 17)
+#install(TARGETS basic DESTINATION bin)
+
+add_executable(stress samples/stress.cpp)
+target_link_libraries(stress goldenplains)
+set_property(TARGET stress PROPERTY CXX_STANDARD 17)
+#install(TARGETS stress DESTINATION bin)

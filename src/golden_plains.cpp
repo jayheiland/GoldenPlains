@@ -1,7 +1,6 @@
 #include "golden_plains.h"
 
-GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
-{
+GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath){
 	id_counter = 0;
 	try {
 		vulkHandler.initWindow();
@@ -12,20 +11,17 @@ GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 	}
 }
 
-Model GraphicsLayer::createModel(std::string modelPath, Texture texture_id, glm::vec3 pos)
-{
+Model GraphicsLayer::createModel(std::string modelPath, Texture texture_id, glm::vec3 pos){
 	vulkHandler.loadModel(id_counter, modelPath, texture_id, pos);
 	return id_counter++;
 }
 
-Model GraphicsLayer::duplicateModel(Model original_model_id)
-{
+Model GraphicsLayer::duplicateModel(Model original_model_id){
 	vulkHandler.duplicateModel(id_counter, original_model_id);
 	return id_counter++;
 }
 
-void GraphicsLayer::destroyModel(Model model_id)
-{
+void GraphicsLayer::destroyModel(Model model_id){
 	vulkHandler.queueDestroyModel(model_id);
 }
 
@@ -33,24 +29,24 @@ void GraphicsLayer::destroyTexture(Texture texture_id) {
 	vulkHandler.destroyTexture(texture_id);
 }
 
-void GraphicsLayer::setModelPosition(Model model_id, glm::vec3 pos)
-{
+void GraphicsLayer::setModelPosition(Model model_id, glm::vec3 pos){
 	vulkHandler.setModelPosition(model_id, pos);
 }
 
-Texture GraphicsLayer::createTexture(std::string texturePath)
-{
+void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
+	vulkHandler.setCamera(cameraPos, targetPos);
+}
+
+Texture GraphicsLayer::createTexture(std::string texturePath){
 	vulkHandler.loadTexture(id_counter, texturePath);
 	return id_counter++;
 }
 
-void GraphicsLayer::setTextureForModel(Texture texture_id, Model model_id)
-{
+void GraphicsLayer::setTextureForModel(Texture texture_id, Model model_id){
 	vulkHandler.setTextureForModel(texture_id, model_id);
 }
 
-void GraphicsLayer::draw()
-{
+void GraphicsLayer::draw(){
 	try {
 		vulkHandler.draw();
 	}
@@ -59,8 +55,7 @@ void GraphicsLayer::draw()
 	}
 }
 
-bool GraphicsLayer::windowShouldClose()
-{
+bool GraphicsLayer::windowShouldClose(){
 	if (vulkHandler.windowCloseButtonClicked()) {
 		return true;
 	}
@@ -68,8 +63,7 @@ bool GraphicsLayer::windowShouldClose()
 }
 
 
-void GraphicsLayer::cleanup()
-{
+void GraphicsLayer::cleanup(){
 	try {
 		vulkHandler.cleanup();
 	}
