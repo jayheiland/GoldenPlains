@@ -3,3 +3,5 @@
 *.bmp
 *.png
 .vscode
+shaders/*.sh
+shaders/*.bat
