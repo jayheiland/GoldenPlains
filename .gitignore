@@ -6,3 +6,4 @@
 shaders/*.sh
 shaders/*.bat
 cleanup.sh
+docs
