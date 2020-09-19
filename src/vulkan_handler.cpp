@@ -1457,7 +1457,7 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 			ubo.model = glm::translate(ubo.model, mdl.second.position);
 
 			ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
-			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 50.0f);
+			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
 			ubo.proj[1][1] *= -1;
 
 			void* data;

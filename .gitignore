@@ -5,3 +5,4 @@
 .vscode
 shaders/*.sh
 shaders/*.bat
+cleanup.sh
