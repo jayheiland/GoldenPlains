@@ -1221,6 +1221,32 @@ void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	camera.targetPos = targetPos;
 }
 
+void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, glm::vec2 pos){
+	Model newModel;
+	const std::vector<Vertex> vertices = {
+		{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+		{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+		{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+		{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+	};
+	for(int idx = 0; idx < vertices.size(); idx++){
+		newModel.vertices.push_back(vertices[idx]);
+		newModel.indices.push_back(idx);
+	}
+
+	newModel.texture_id = texture_id;
+	newModel.queued_for_destruction = false;
+	newModel.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	newModel.valid_frames = (uint32_t)swapChainImages.size();
+	loadedModels.insert(std::make_pair(id, newModel));
+
+	createVertexBuffer(id);
+	createIndexBuffer(id);
+	createUniformBuffers(id);
+	createDescriptorSets(id);
+	createSecondaryCommandBuffers(id);
+}
+
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
 	VkBufferCreateInfo bufferInfo = {};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;

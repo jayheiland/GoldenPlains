@@ -38,3 +38,7 @@ set_property(TARGET basic PROPERTY CXX_STANDARD 17)
 add_executable(stress samples/stress.cpp)
 target_link_libraries(stress goldenplains)
 set_property(TARGET stress PROPERTY CXX_STANDARD 17)
+
+add_executable(text samples/text.cpp)
+target_link_libraries(text goldenplains)
+set_property(TARGET text PROPERTY CXX_STANDARD 17)

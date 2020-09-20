@@ -2,6 +2,8 @@
 #define GRAPHICS_LAYER_H
 
 #include <string>
+#include <unordered_map>
+#include <iostream>
 
 #include "vulkan_handler.h"
 
@@ -13,6 +15,7 @@ class GraphicsLayer
 private:
 	VulkanHandler vulkHandler;
 	uint32_t id_counter;
+	std::unordered_map<char, Texture> charTextures;
 public:
 	GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath);
 	Model createModel(std::string modelPath, Texture texture_id, glm::vec3 pos);
@@ -21,6 +24,8 @@ public:
 	void destroyTexture(Texture texture_id);
 	void setModelPosition(Model model_id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
+	void loadCharTextures(std::string directory);
+	void createChar(char character, glm::vec2 pos);
 
 	Texture createTexture(std::string texturePath);
 	void setTextureForModel(Texture texture_id, Model model_id);

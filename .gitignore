@@ -1,9 +1,10 @@
 *.spv
 *.obj
 *.bmp
-*.png
+textures
 .vscode
 shaders/*.sh
 shaders/*.bat
 cleanup.sh
-docs
+docs/*.cpp
+docs/*.txt

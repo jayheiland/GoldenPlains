@@ -37,6 +37,18 @@ void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	vulkHandler.setCamera(cameraPos, targetPos);
 }
 
+void GraphicsLayer::loadCharTextures(std::string directory){
+	std::string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	for(char ch : chars){
+		Texture tx = createTexture(directory + std::to_string(ch) + ".bmp");
+		charTextures.insert(std::make_pair(ch, tx));
+	}
+}
+
+void GraphicsLayer::createChar(char character, glm::vec2 pos){
+	vulkHandler.createGlyph(id_counter++, charTextures.at(character), pos);
+}
+
 Texture GraphicsLayer::createTexture(std::string texturePath){
 	vulkHandler.loadTexture(id_counter, texturePath);
 	return id_counter++;

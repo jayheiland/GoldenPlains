@@ -288,6 +288,7 @@ public:
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
 	void setModelPosition(uint32_t id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
+	void createGlyph(uint32_t id, uint32_t texture_id, glm::vec2 pos);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();
