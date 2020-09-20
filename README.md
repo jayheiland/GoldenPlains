@@ -77,6 +77,8 @@ $ ./basic
 
 This will load a single instance of the Viking Room. The camera and model positions are set within `GoldenPlains/samples/basic.cpp`. GoldenPlains does not have lighting enabled; this model has lighting baked into the texture.
 
+![Basic](https://github.com/jayheiland/GoldenPlains/blob/master/docs/basic.png)
+
 #### Sample - Multiple object instances
 
 This sample program can work as a "stress test". In `GoldenPlains`, do:
@@ -84,4 +86,10 @@ This sample program can work as a "stress test". In `GoldenPlains`, do:
 $ ./stress 1000
 ```
 
-This will load 1 instance of the Viking Room and then create 999 duplicates in a square matrix on the XY-plane. After 150 frames, half of these duplicates will be deleted. Due to how descriptors are managed within GoldenPlains, the maximum number of object instances is 9000.
+This will load 1 instance of the Viking Room and then create 999 duplicates in a square matrix on the XY-plane. 
+
+![Stress All](https://github.com/jayheiland/GoldenPlains/blob/master/docs/stress1.png)
+
+After 150 frames, half of these duplicates will be deleted. Due to how descriptors are managed within GoldenPlains, the maximum number of object instances is 9000.
+
+![Stress All](https://github.com/jayheiland/GoldenPlains/blob/master/docs/stress2.png)
