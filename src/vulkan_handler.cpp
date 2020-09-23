@@ -360,7 +360,7 @@ void VulkanHandler::createSwapChain() {
 	createInfo.imageColorSpace = surfaceFormat.colorSpace;
 	createInfo.imageExtent = extent;
 	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -1342,7 +1342,7 @@ void VulkanHandler::createPrimaryCommandBuffers() {
 void VulkanHandler::recordSecondaryCommandBuffers(uint32_t imageIndex){
 	for (auto& mdl : loadedModels) {
 		if (!mdl.second.queued_for_destruction) {
-			if (vkResetCommandBuffer(mdl.second.secondaryCommandBuffers[imageIndex], NULL) != VK_SUCCESS) {
+			if (vkResetCommandBuffer(mdl.second.secondaryCommandBuffers[imageIndex], 0x0) != VK_SUCCESS) {
 				throw std::runtime_error("failed to reset secondary command buffer!");
 			}
 		}
@@ -1387,7 +1387,7 @@ void VulkanHandler::recordSecondaryCommandBuffers(uint32_t imageIndex){
 void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 	recordSecondaryCommandBuffers(imageIndex);
 
-	if (vkResetCommandBuffer(primaryCommandBuffers[imageIndex], NULL) != VK_SUCCESS) {
+	if (vkResetCommandBuffer(primaryCommandBuffers[imageIndex], 0x0) != VK_SUCCESS) {
 		throw std::runtime_error("failed to reset primary command buffer!");
 	}
 
@@ -1424,6 +1424,42 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 
 	//vulkan blit function must be called outside render pass
 	for(auto& glyph : loadedGlyphs){
+		std::vector<VkImageMemoryBarrier> blitBarriers;
+		blitBarriers.resize(2);
+		blitBarriers[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		blitBarriers[0].image = loadedTextures.at(glyph.second.texture_id).textureImage;
+		blitBarriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		blitBarriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		blitBarriers[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blitBarriers[0].subresourceRange.baseArrayLayer = 0;
+		blitBarriers[0].subresourceRange.layerCount = 1;
+		blitBarriers[0].subresourceRange.levelCount = 1;
+		blitBarriers[0].subresourceRange.baseMipLevel = 0;
+		blitBarriers[0].oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		blitBarriers[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		blitBarriers[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		blitBarriers[0].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+		blitBarriers[1].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		blitBarriers[1].image = swapChainImages[imageIndex];
+		blitBarriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		blitBarriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		blitBarriers[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blitBarriers[1].subresourceRange.baseArrayLayer = 0;
+		blitBarriers[1].subresourceRange.layerCount = 1;
+		blitBarriers[1].subresourceRange.levelCount = 1;
+		blitBarriers[1].subresourceRange.baseMipLevel = 0;
+		blitBarriers[1].oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		blitBarriers[1].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		blitBarriers[1].srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+		blitBarriers[1].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		vkCmdPipelineBarrier(primaryCommandBuffers[imageIndex],
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
+			0, nullptr,
+			0, nullptr,
+			2, blitBarriers.data());
+
 		VkImageBlit blit{};
 		blit.srcOffsets[0] = { 0, 0, 0 };
 		blit.srcOffsets[1] = { 1, 1, 1 };
@@ -1443,6 +1479,22 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 			swapChainImages[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &blit,
 			VK_FILTER_LINEAR);
+		
+		blitBarriers[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		blitBarriers[0].newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		blitBarriers[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		blitBarriers[0].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+
+		blitBarriers[1].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		blitBarriers[1].newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		blitBarriers[1].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		blitBarriers[1].dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+
+		vkCmdPipelineBarrier(primaryCommandBuffers[imageIndex],
+			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+			0, nullptr,
+			0, nullptr,
+			2, blitBarriers.data());
 	}
 	
 	if (vkEndCommandBuffer(primaryCommandBuffers[imageIndex]) != VK_SUCCESS) {
