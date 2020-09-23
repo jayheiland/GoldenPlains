@@ -40,13 +40,28 @@ void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 void GraphicsLayer::loadCharTextures(std::string directory){
 	std::string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	for(char ch : chars){
-		Texture tx = createTexture(directory + std::to_string(ch) + ".bmp");
+		std::stringstream ss;
+		ss << directory << ch << ".png";
+		Texture tx = createTexture(ss.str());
 		charTextures.insert(std::make_pair(ch, tx));
 	}
 }
 
-void GraphicsLayer::createChar(char character, glm::vec2 pos){
-	vulkHandler.createGlyph(id_counter++, charTextures.at(character), pos);
+TextBox GraphicsLayer::createTextBox(std::string text, int x, int y){
+	std::vector<uint32_t> textChars;
+	int x_offset = 0;
+	for(char ch : text){
+		uint32_t char_id = createChar(ch, x + x_offset, y);
+		x_offset+=0.1;
+		textChars.push_back(char_id);
+	}
+	textBoxes.insert(std::make_pair(id_counter, textChars));
+	return id_counter++;
+}
+
+uint32_t GraphicsLayer::createChar(char character, int x, int y){
+	vulkHandler.createGlyph(id_counter, charTextures.at(character), x, y);
+	return id_counter++;
 }
 
 Texture GraphicsLayer::createTexture(std::string texturePath){

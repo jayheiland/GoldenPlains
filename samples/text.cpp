@@ -5,7 +5,9 @@ int main() {
 
 	grphLyr.setCamera(glm::vec3(0.0f, 2.5f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-	grphLyr.loadCharTextures("./textures/chars/");
+	grphLyr.loadCharTextures("textures/chars/");
+
+    grphLyr.createTextBox("O", 0, 0);
 
 	while (!grphLyr.windowShouldClose()) {
 		grphLyr.draw();

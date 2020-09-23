@@ -1221,30 +1221,12 @@ void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	camera.targetPos = targetPos;
 }
 
-void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, glm::vec2 pos){
-	Model newModel;
-	const std::vector<Vertex> vertices = {
-		{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-		{{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-		{{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-	};
-	for(int idx = 0; idx < vertices.size(); idx++){
-		newModel.vertices.push_back(vertices[idx]);
-		newModel.indices.push_back(idx);
-	}
-
-	newModel.texture_id = texture_id;
-	newModel.queued_for_destruction = false;
-	newModel.position = glm::vec3(0.0f, 0.0f, 0.0f);
-	newModel.valid_frames = (uint32_t)swapChainImages.size();
-	loadedModels.insert(std::make_pair(id, newModel));
-
-	createVertexBuffer(id);
-	createIndexBuffer(id);
-	createUniformBuffers(id);
-	createDescriptorSets(id);
-	createSecondaryCommandBuffers(id);
+void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, int x, int y){
+	Glyph glyph;
+	glyph.texture_id = texture_id;
+	glyph.x = x;
+	glyph.y = y;
+	loadedGlyphs.insert(std::make_pair(id, glyph));
 }
 
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1440,6 +1422,29 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 
 	vkCmdEndRenderPass(primaryCommandBuffers[imageIndex]);
 
+	//vulkan blit function must be called outside render pass
+	for(auto& glyph : loadedGlyphs){
+		VkImageBlit blit{};
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { 1, 1, 1 };
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = 0;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = 1;
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { 1, 1, 1 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = 0;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = 1;
+
+		vkCmdBlitImage(primaryCommandBuffers[imageIndex], 
+			loadedTextures.at(glyph.second.texture_id).textureImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			swapChainImages[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1, &blit,
+			VK_FILTER_LINEAR);
+	}
+	
 	if (vkEndCommandBuffer(primaryCommandBuffers[imageIndex]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
