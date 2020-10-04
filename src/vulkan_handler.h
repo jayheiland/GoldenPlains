@@ -115,7 +115,7 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 class VulkanHandler {
 private:
-	const bool enableValidationLayers = true;
+	const bool enableValidationLayers = false;
 
 	const uint32_t WIDTH = 800;
 	const uint32_t HEIGHT = 600;
@@ -179,6 +179,7 @@ private:
 
 	struct Model {
 		bool queued_for_destruction;
+		bool is_gui_element;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 		VkBuffer vertexBuffer;
@@ -295,7 +296,7 @@ public:
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
 	void setModelPosition(uint32_t id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
-	void createGlyph(uint32_t id, uint32_t texture_id, int x, int y);
+	void createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();

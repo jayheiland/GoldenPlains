@@ -360,7 +360,7 @@ void VulkanHandler::createSwapChain() {
 	createInfo.imageColorSpace = surfaceFormat.colorSpace;
 	createInfo.imageExtent = extent;
 	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -1045,6 +1045,7 @@ void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t textu
 
 	newModel.texture_id = texture_id;
 	newModel.queued_for_destruction = false;
+	newModel.is_gui_element = false;
 	newModel.position = pos;
 	newModel.valid_frames = (uint32_t)swapChainImages.size();
 	loadedModels.insert(std::make_pair(id, newModel));
@@ -1221,12 +1222,42 @@ void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	camera.targetPos = targetPos;
 }
 
-void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, int x, int y){
-	Glyph glyph;
-	glyph.texture_id = texture_id;
-	glyph.x = x;
-	glyph.y = y;
-	loadedGlyphs.insert(std::make_pair(id, glyph));
+void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset){
+	Model newGlyph;
+	std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
+	double fontScale = 1.0;
+	float glyWidth = 0.3f * fontScale;
+	float glyHeight = 0.6f * fontScale;
+	const std::vector<Vertex> vertices = {
+		{{x-glyWidth, y-glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v}},
+		{{x+glyWidth, y-glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
+		{{x-glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+
+		{{x+glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v+v_offset}},
+		{{x-glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+		{{x+glyWidth, y-glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}}
+	};
+	for(Vertex vertex : vertices){
+		if (uniqueVertices.count(vertex) == 0) {
+			uniqueVertices[vertex] = static_cast<uint32_t>(newGlyph.vertices.size());
+			newGlyph.vertices.push_back(vertex);
+		}
+
+		newGlyph.indices.push_back(uniqueVertices[vertex]);
+	}
+
+	newGlyph.texture_id = texture_id;
+	newGlyph.queued_for_destruction = false;
+	newGlyph.is_gui_element = true;
+	newGlyph.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	newGlyph.valid_frames = (uint32_t)swapChainImages.size();
+	loadedModels.insert(std::make_pair(id, newGlyph));
+
+	createVertexBuffer(id);
+	createIndexBuffer(id);
+	createUniformBuffers(id);
+	createDescriptorSets(id);
+	createSecondaryCommandBuffers(id);
 }
 
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1422,81 +1453,6 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 
 	vkCmdEndRenderPass(primaryCommandBuffers[imageIndex]);
 
-	//vulkan blit function must be called outside render pass
-	for(auto& glyph : loadedGlyphs){
-		std::vector<VkImageMemoryBarrier> blitBarriers;
-		blitBarriers.resize(2);
-		blitBarriers[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		blitBarriers[0].image = loadedTextures.at(glyph.second.texture_id).textureImage;
-		blitBarriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		blitBarriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		blitBarriers[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blitBarriers[0].subresourceRange.baseArrayLayer = 0;
-		blitBarriers[0].subresourceRange.layerCount = 1;
-		blitBarriers[0].subresourceRange.levelCount = 1;
-		blitBarriers[0].subresourceRange.baseMipLevel = 0;
-		blitBarriers[0].oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		blitBarriers[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		blitBarriers[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		blitBarriers[0].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-		blitBarriers[1].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		blitBarriers[1].image = swapChainImages[imageIndex];
-		blitBarriers[1].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		blitBarriers[1].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		blitBarriers[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blitBarriers[1].subresourceRange.baseArrayLayer = 0;
-		blitBarriers[1].subresourceRange.layerCount = 1;
-		blitBarriers[1].subresourceRange.levelCount = 1;
-		blitBarriers[1].subresourceRange.baseMipLevel = 0;
-		blitBarriers[1].oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		blitBarriers[1].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		blitBarriers[1].srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-		blitBarriers[1].dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-		vkCmdPipelineBarrier(primaryCommandBuffers[imageIndex],
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-			0, nullptr,
-			0, nullptr,
-			2, blitBarriers.data());
-
-		VkImageBlit blit{};
-		blit.srcOffsets[0] = { 0, 0, 0 };
-		blit.srcOffsets[1] = { 1, 1, 1 };
-		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.srcSubresource.mipLevel = 0;
-		blit.srcSubresource.baseArrayLayer = 0;
-		blit.srcSubresource.layerCount = 1;
-		blit.dstOffsets[0] = { 0, 0, 0 };
-		blit.dstOffsets[1] = { 1, 1, 1 };
-		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.dstSubresource.mipLevel = 0;
-		blit.dstSubresource.baseArrayLayer = 0;
-		blit.dstSubresource.layerCount = 1;
-
-		vkCmdBlitImage(primaryCommandBuffers[imageIndex], 
-			loadedTextures.at(glyph.second.texture_id).textureImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			swapChainImages[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1, &blit,
-			VK_FILTER_LINEAR);
-		
-		blitBarriers[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		blitBarriers[0].newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		blitBarriers[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		blitBarriers[0].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-
-		blitBarriers[1].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		blitBarriers[1].newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		blitBarriers[1].srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		blitBarriers[1].dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-
-		vkCmdPipelineBarrier(primaryCommandBuffers[imageIndex],
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-			0, nullptr,
-			0, nullptr,
-			2, blitBarriers.data());
-	}
-	
 	if (vkEndCommandBuffer(primaryCommandBuffers[imageIndex]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
@@ -1533,15 +1489,29 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 	for (auto& mdl : loadedModels) {
 		if(!mdl.second.queued_for_destruction){
 			UniformBufferObject ubo = {};
-			//rotate the model
-			//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			//translate the model
-			ubo.model = glm::translate(ubo.model, mdl.second.position);
+			if(!mdl.second.is_gui_element){
+				//rotate the model
+				//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				//translate the model
+				ubo.model = glm::translate(ubo.model, mdl.second.position);
 
-			ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
-			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
-			ubo.proj[1][1] *= -1;
+				ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
+				ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
+				ubo.proj[1][1] *= -1;
+			}
+			else{
+				//rotate the model
+				ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				//ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+				//translate the model
+				ubo.model = glm::translate(ubo.model, mdl.second.position);
+
+				ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+				ubo.proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 2.0f);
+				ubo.proj[1][1] *= -1;
+			}
 
 			void* data;
 			vkMapMemory(device, mdl.second.uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);

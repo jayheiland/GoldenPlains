@@ -2,6 +2,8 @@
 
 GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath){
 	id_counter = 0;
+	font_u_offset = 0.03794;
+	font_v_offset = 0.33;
 	try {
 		vulkHandler.initWindow();
 		vulkHandler.initVulkan(vertShdrPath, fragShdrPath);
@@ -37,30 +39,42 @@ void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	vulkHandler.setCamera(cameraPos, targetPos);
 }
 
-void GraphicsLayer::loadCharTextures(std::string directory){
-	std::string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	for(char ch : chars){
-		std::stringstream ss;
-		ss << directory << ch << ".png";
-		Texture tx = createTexture(ss.str());
-		charTextures.insert(std::make_pair(ch, tx));
+void GraphicsLayer::loadFont(std::string path){
+	std::string line1 = "abcdefghijklmnopqrstuvwxyz";
+	std::string line2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	std::string line3 = "0123456789.:,;'\"(!?)+-*/= ";
+	double u = -0.0005;
+	for(char ch : line1){
+		fontUVCoords[ch] = std::make_pair(u, 0.0);
+		u+=font_u_offset;
 	}
+	u=0.0;
+	for(char ch : line2){
+		fontUVCoords[ch] = std::make_pair(u, font_v_offset);
+		u+=font_u_offset;
+	}
+	u=0.0;
+	for(char ch : line3){
+		fontUVCoords[ch] = std::make_pair(u, font_v_offset*2.0);
+		u+=font_u_offset;
+	}
+	font = createTexture(path);
 }
 
-TextBox GraphicsLayer::createTextBox(std::string text, int x, int y){
+TextBox GraphicsLayer::createTextBox(std::string text, double x, double y, double width, double height){
 	std::vector<uint32_t> textChars;
-	int x_offset = 0;
+	double x_offset = 0.0;
 	for(char ch : text){
 		uint32_t char_id = createChar(ch, x + x_offset, y);
-		x_offset+=0.1;
+		x_offset-=0.6;
 		textChars.push_back(char_id);
 	}
 	textBoxes.insert(std::make_pair(id_counter, textChars));
 	return id_counter++;
 }
 
-uint32_t GraphicsLayer::createChar(char character, int x, int y){
-	vulkHandler.createGlyph(id_counter, charTextures.at(character), x, y);
+uint32_t GraphicsLayer::createChar(char character, double x, double y){
+	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset);
 	return id_counter++;
 }
 
