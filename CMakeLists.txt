@@ -29,7 +29,7 @@ set_property(TARGET goldenplains PROPERTY CXX_STANDARD 17)
 target_include_directories(goldenplains PUBLIC ${INC}) 
 target_link_libraries(goldenplains ${LIBS})
 install(TARGETS goldenplains DESTINATION lib)
-install(FILES src/golden_plains.h DESTINATION include)
+install(FILES src/golden_plains.h src/vulkan_handler.h ${STB_IMAGE_DIR}/stb_image.h DESTINATION include)
 
 add_executable(basic samples/basic.cpp)
 target_link_libraries(basic goldenplains)

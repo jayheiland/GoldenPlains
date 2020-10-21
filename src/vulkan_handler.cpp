@@ -1222,20 +1222,29 @@ void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	camera.targetPos = targetPos;
 }
 
-void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset){
+std::pair<uint32_t, uint32_t> VulkanHandler::getScreenDimensions(){
+	return std::make_pair(WIDTH, HEIGHT);
+}
+
+void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight){
 	Model newGlyph;
 	std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
-	double fontScale = 1.0;
-	float glyWidth = 0.3f * fontScale;
-	float glyHeight = 0.6f * fontScale;
+	float glyphScale = 1.0;
+	float glyWidth = ((float)pixWidth/WIDTH) * glyphScale;
+	float glyHeight = ((float)pixHeight/HEIGHT) * glyphScale;
+	std::cout << glyWidth << ", " << glyHeight << std::endl;
+	std::cout << "x: " << x << std::endl;
+	std::cout << "x+glyWidth: " << x+glyWidth << std::endl;
+	std::cout << "y: " << y << std::endl;
+	std::cout << "y+glyWidth: " << y+glyWidth << std::endl;
 	const std::vector<Vertex> vertices = {
-		{{x-glyWidth, y-glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v}},
-		{{x+glyWidth, y-glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
-		{{x-glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+		{{x, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v}},
+		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
+		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
 
 		{{x+glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v+v_offset}},
-		{{x-glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
-		{{x+glyWidth, y-glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}}
+		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}}
 	};
 	for(Vertex vertex : vertices){
 		if (uniqueVertices.count(vertex) == 0) {
@@ -1509,7 +1518,7 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 
 				ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-				ubo.proj = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.0f, 2.0f);
+				ubo.proj = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -2.0f, 2.0f);
 				ubo.proj[1][1] *= -1;
 			}
 

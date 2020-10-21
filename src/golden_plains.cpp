@@ -13,26 +13,26 @@ GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 	}
 }
 
-Model GraphicsLayer::createModel(std::string modelPath, Texture texture_id, glm::vec3 pos){
+GraphObjID GraphicsLayer::createModel(std::string modelPath, TextureID texture_id, glm::vec3 pos){
 	vulkHandler.loadModel(id_counter, modelPath, texture_id, pos);
 	return id_counter++;
 }
 
-Model GraphicsLayer::duplicateModel(Model original_model_id){
-	vulkHandler.duplicateModel(id_counter, original_model_id);
+GraphObjID GraphicsLayer::duplicateModel(GraphObjID original){
+	vulkHandler.duplicateModel(id_counter, original);
 	return id_counter++;
 }
 
-void GraphicsLayer::destroyModel(Model model_id){
-	vulkHandler.queueDestroyModel(model_id);
+void GraphicsLayer::destroyModel(GraphObjID model){
+	vulkHandler.queueDestroyModel(model);
 }
 
-void GraphicsLayer::destroyTexture(Texture texture_id) {
+void GraphicsLayer::destroyTexture(TextureID texture_id) {
 	vulkHandler.destroyTexture(texture_id);
 }
 
-void GraphicsLayer::setModelPosition(Model model_id, glm::vec3 pos){
-	vulkHandler.setModelPosition(model_id, pos);
+void GraphicsLayer::setModelPosition(GraphObjID model, glm::vec3 pos){
+	vulkHandler.setModelPosition(model, pos);
 }
 
 void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
@@ -61,30 +61,44 @@ void GraphicsLayer::loadFont(std::string path){
 	font = createTexture(path);
 }
 
-TextBox GraphicsLayer::createTextBox(std::string text, double x, double y, double width, double height){
+GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, uint width, uint height){
+	TextBox textbox;
 	std::vector<uint32_t> textChars;
+	int charPixWidth = 10;
+	int charPixHeight = 20;
 	double x_offset = 0.0;
+	double x_offset_incr = -(float)charPixWidth/vulkHandler.getScreenDimensions().first;
 	for(char ch : text){
-		uint32_t char_id = createChar(ch, x + x_offset, y);
-		x_offset-=0.6;
+		std::cout << "x_offset: " << x_offset << std::endl;
+		uint32_t char_id = createChar(ch, x + x_offset, y, charPixWidth, charPixHeight);
+		x_offset+=x_offset_incr;
 		textChars.push_back(char_id);
 	}
-	textBoxes.insert(std::make_pair(id_counter, textChars));
+	textbox.char_models.insert(textbox.char_models.begin(), textChars.begin(), textChars.end());
+	textbox.rect.x = x;
+	textbox.rect.y = y;
+	textbox.rect.w = width;
+	textbox.rect.h = height;
+	textBoxes[id_counter] = textbox;
 	return id_counter++;
 }
 
-uint32_t GraphicsLayer::createChar(char character, double x, double y){
-	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset);
+uint32_t GraphicsLayer::createChar(char character, double x, double y, int pixWidth, int pixHeight){
+	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset, pixWidth, pixHeight);
 	return id_counter++;
 }
 
-Texture GraphicsLayer::createTexture(std::string texturePath){
+TextureID GraphicsLayer::createTexture(std::string texturePath){
 	vulkHandler.loadTexture(id_counter, texturePath);
 	return id_counter++;
 }
 
-void GraphicsLayer::setTextureForModel(Texture texture_id, Model model_id){
-	vulkHandler.setTextureForModel(texture_id, model_id);
+void GraphicsLayer::setTextureForModel(TextureID texture_id, GraphObjID model){
+	vulkHandler.setTextureForModel(texture_id, model);
+}
+
+void GraphicsLayer::remove(GraphObjID id){
+
 }
 
 void GraphicsLayer::draw(){

@@ -9,33 +9,57 @@
 
 #include "vulkan_handler.h"
 
-typedef uint32_t Model;
-typedef uint32_t Texture;
-typedef uint32_t TextBox;
+typedef uint GraphObjID;
+typedef uint TextureID;
+
+struct Rect{
+	int x,y;
+	uint w,h;
+};
+
+struct Sprite{
+	TextureID texture_id;
+	Rect rect;
+};
+
+struct TextBox{
+	std::vector<uint32_t> char_models;
+	Rect rect;
+};
+
+union Button{
+	TextBox textbox;
+	Sprite sprite;
+};
 
 class GraphicsLayer
 {
 private:
 	VulkanHandler vulkHandler;
 	uint32_t id_counter;
-	Texture font;
+	TextureID font;
 	double font_u_offset, font_v_offset;
 	std::unordered_map<char, std::pair<double, double> > fontUVCoords;
-	std::unordered_map<TextBox, std::vector<uint32_t> > textBoxes;
-	uint32_t createChar(char character, double x, double y);
+	std::unordered_map<GraphObjID, TextBox> textBoxes;
+	uint32_t createChar(char character, double x, double y, int pixWidth, int pixHeight);
 public:
 	GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath);
-	Model createModel(std::string modelPath, Texture texture_id, glm::vec3 pos);
-	Model duplicateModel(Model original_model_id);
-	void destroyModel(Model model_id);
-	void destroyTexture(Texture texture_id);
-	void setModelPosition(Model model_id, glm::vec3 pos);
+	GraphObjID createModel(std::string modelPath, TextureID texture_id, glm::vec3 pos);
+	GraphObjID duplicateModel(GraphObjID original_model_id);
+	void destroyModel(GraphObjID model_id);
+	void destroyTexture(TextureID texture_id);
+	void setModelPosition(GraphObjID model_id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 	void loadFont(std::string path);
-	TextBox createTextBox(std::string text, double x, double y, double width, double height);
 
-	Texture createTexture(std::string texturePath);
-	void setTextureForModel(Texture texture_id, Model model_id);
+	GraphObjID createTextBox(std::string text, double x, double y, uint width, uint height);
+
+	GraphObjID createButton(std::string text, double x, double y, uint width, uint height);
+
+	void remove(GraphObjID id);
+
+	TextureID createTexture(std::string texturePath);
+	void setTextureForModel(TextureID texture_id, GraphObjID model_id);
 
 	void draw();
 	bool windowShouldClose();

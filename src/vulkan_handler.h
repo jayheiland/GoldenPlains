@@ -117,8 +117,8 @@ class VulkanHandler {
 private:
 	const bool enableValidationLayers = false;
 
-	const uint32_t WIDTH = 800;
-	const uint32_t HEIGHT = 600;
+	const uint32_t WIDTH = 1200;
+	const uint32_t HEIGHT = 675;
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -296,7 +296,8 @@ public:
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
 	void setModelPosition(uint32_t id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
-	void createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset);
+	std::pair<uint32_t, uint32_t> getScreenDimensions();
+	void createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();
