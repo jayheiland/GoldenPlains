@@ -67,7 +67,7 @@ GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, ui
 	int charPixWidth = 10;
 	int charPixHeight = 20;
 	double x_offset = 0.0;
-	double x_offset_incr = -(float)charPixWidth/vulkHandler.getScreenDimensions().first;
+	double x_offset_incr = (float)charPixWidth/vulkHandler.getScreenDimensions().first;
 	for(char ch : text){
 		std::cout << "x_offset: " << x_offset << std::endl;
 		uint32_t char_id = createChar(ch, x + x_offset, y, charPixWidth, charPixHeight);

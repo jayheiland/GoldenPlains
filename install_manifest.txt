@@ -1,4 +1,0 @@
-/usr/local/lib/libgoldenplains.so
-/usr/local/include/golden_plains.h
-/usr/local/include/vulkan_handler.h
-/usr/local/include/stb_image.h

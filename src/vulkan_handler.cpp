@@ -1237,14 +1237,18 @@ void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, doub
 	std::cout << "x+glyWidth: " << x+glyWidth << std::endl;
 	std::cout << "y: " << y << std::endl;
 	std::cout << "y+glyWidth: " << y+glyWidth << std::endl;
+	// {u, v}
+	// {u+u_offset, v}
+	// {u, v+v_offset}
+	// {u+u_offset, v+v_offset}
 	const std::vector<Vertex> vertices = {
-		{{x, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v}},
-		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
-		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+		{{x, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v+v_offset}},
+		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
 
-		{{x+glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v+v_offset}},
-		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
-		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}}
+		{{x+glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v}},
+		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
+		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}}
 	};
 	for(Vertex vertex : vertices){
 		if (uniqueVertices.count(vertex) == 0) {
@@ -1511,10 +1515,10 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 			}
 			else{
 				//rotate the model
-				ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 				//ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
 				//translate the model
-				ubo.model = glm::translate(ubo.model, mdl.second.position);
+				ubo.model = glm::translate(glm::mat4(1.0f), mdl.second.position);
 
 				ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
