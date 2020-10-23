@@ -1,5 +1,9 @@
 #include "golden_plains.h"
 
+void on_click(){
+	printf("%s\n", "You clicked the button!");
+}
+
 int main() {
 	GraphicsLayer grphLyr("./shaders/vert.spv", "./shaders/frag.spv");
 
@@ -7,11 +11,7 @@ int main() {
 
 	grphLyr.loadFont("textures/chars/font.png");
 
-    grphLyr.createTextBox("The quick brown fox jumped over the lazy dog.", 0.2, 0, 0, 0);
-
-	grphLyr.createTextBox("Peter piper picked a peck of pickled capers.", 0, 0.5, 0, 0);
-
-	grphLyr.createTextBox("Important information about the app.", 0.6, 0.7, 0, 0);
+    grphLyr.createButton(on_click, "Click here!", 0, 0, 150, 40);
 
 	while (!grphLyr.windowShouldClose()) {
 		grphLyr.draw();

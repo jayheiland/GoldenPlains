@@ -1,7 +1,7 @@
 #include "golden_plains.h"
 
 GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath){
-	id_counter = 0;
+	id_counter = 1;
 	font_u_offset = 0.03794;
 	font_v_offset = 0.33;
 	try {
@@ -11,6 +11,31 @@ GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}
+}
+
+GraphObjID GraphicsLayer::createChar(char character, double x, double y, uint pixWidth, uint pixHeight){
+	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset, pixWidth, pixHeight);
+	return id_counter++;
+}
+
+bool GraphicsLayer::mouseIsInside(Rect rect){
+	mousePosY = (double)vulkHandler.getScreenDimensions().second - mousePosY;
+	return (mousePosX >= rect.x && mousePosX <= rect.x+rect.w && mousePosY >= rect.y && mousePosY <= rect.y+rect.h);
+}
+
+void GraphicsLayer::handleInteractions(){
+	int lmb = vulkHandler.getMouseButton(GLFW_MOUSE_BUTTON_LEFT);
+	int rmb = vulkHandler.getMouseButton(GLFW_MOUSE_BUTTON_RIGHT);
+
+	if(lmb == GLFW_PRESS && lmbPrevState != GLFW_PRESS){
+		for(auto button : buttons){
+			if(mouseIsInside(textBoxes[button.second.textbox].rect)){
+				button.second.onLeftClick();
+			}
+		}
+	}
+	lmbPrevState = lmb;
+	rmbPrevState = rmb;
 }
 
 GraphObjID GraphicsLayer::createModel(std::string modelPath, TextureID texture_id, glm::vec3 pos){
@@ -63,14 +88,13 @@ void GraphicsLayer::loadFont(std::string path){
 
 GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, uint width, uint height){
 	TextBox textbox;
-	std::vector<uint32_t> textChars;
-	int charPixWidth = 10;
-	int charPixHeight = 20;
+	std::vector<GraphObjID> textChars;
+	uint charPixWidth = 10;
+	uint charPixHeight = charPixWidth*2;
 	double x_offset = 0.0;
 	double x_offset_incr = (float)charPixWidth/vulkHandler.getScreenDimensions().first;
 	for(char ch : text){
-		std::cout << "x_offset: " << x_offset << std::endl;
-		uint32_t char_id = createChar(ch, x + x_offset, y, charPixWidth, charPixHeight);
+		GraphObjID char_id = createChar(ch, x + x_offset, y, charPixWidth, charPixHeight);
 		x_offset+=x_offset_incr;
 		textChars.push_back(char_id);
 	}
@@ -83,8 +107,12 @@ GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, ui
 	return id_counter++;
 }
 
-uint32_t GraphicsLayer::createChar(char character, double x, double y, int pixWidth, int pixHeight){
-	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset, pixWidth, pixHeight);
+GraphObjID GraphicsLayer::createButton(void (*onLeftClick)(), std::string text, double x, double y, uint width, uint height){
+	Button button;
+	button.textbox = createTextBox(text, x, y, width, height);
+	button.sprite = GUI_NULL_ID;
+	button.onLeftClick = onLeftClick;
+	buttons[id_counter] = button;
 	return id_counter++;
 }
 
@@ -97,12 +125,49 @@ void GraphicsLayer::setTextureForModel(TextureID texture_id, GraphObjID model){
 	vulkHandler.setTextureForModel(texture_id, model);
 }
 
-void GraphicsLayer::remove(GraphObjID id){
+void GraphicsLayer::remove3DModel(GraphObjID id){
+	vulkHandler.queueDestroyModel(id);
+}
 
+void GraphicsLayer::removeTextBox(GraphObjID id){
+	for(auto textbox : textBoxes){
+		if(textbox.first == id){
+			for(auto charModel : textbox.second.char_models){
+				remove3DModel(charModel);
+			}
+			textBoxes.erase(textbox.first);
+			return;
+		}
+	}
+}
+
+void GraphicsLayer::removeButton(GraphObjID id){
+	for(auto button : buttons){
+		if(button.first == id){
+			if(button.second.textbox != GUI_NULL_ID){
+				removeTextBox(button.second.textbox);
+			}
+			if(button.second.sprite != GUI_NULL_ID){
+				removeSprite(button.second.sprite);
+			}
+		}
+	}
+}
+
+void GraphicsLayer::removeSprite(GraphObjID id){
+	for(auto sprite : sprites){
+		if(sprite.first == id){
+			remove3DModel(sprite.first);
+			sprites.erase(sprite.first);
+			return;
+		}
+	}
 }
 
 void GraphicsLayer::draw(){
 	try {
+		vulkHandler.getMousePos(&mousePosX, &mousePosY);
+		handleInteractions();
 		vulkHandler.draw();
 	}
 	catch (const std::exception& e) {

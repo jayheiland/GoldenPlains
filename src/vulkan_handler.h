@@ -288,6 +288,8 @@ private:
 public:
 	void initWindow();
 	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
+	void getMousePos(double *xpos, double *ypos);
+	int getMouseButton(int button);
 	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos);
 	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
 	void queueDestroyModel(uint32_t id);

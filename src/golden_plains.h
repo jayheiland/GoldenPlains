@@ -23,25 +23,37 @@ struct Sprite{
 };
 
 struct TextBox{
-	std::vector<uint32_t> char_models;
+	std::vector<GraphObjID> char_models;
 	Rect rect;
 };
 
-union Button{
-	TextBox textbox;
-	Sprite sprite;
+struct Button{
+	GraphObjID textbox;
+	GraphObjID sprite;
+	void (*onLeftClick)();
 };
 
 class GraphicsLayer
 {
 private:
 	VulkanHandler vulkHandler;
-	uint32_t id_counter;
+	uint id_counter;
+	const uint GUI_NULL_ID = 0;
+	double mousePosX, mousePosY;
+	int lmbPrevState, rmbPrevState;
 	TextureID font;
 	double font_u_offset, font_v_offset;
 	std::unordered_map<char, std::pair<double, double> > fontUVCoords;
+
+	//graphics objects
 	std::unordered_map<GraphObjID, TextBox> textBoxes;
-	uint32_t createChar(char character, double x, double y, int pixWidth, int pixHeight);
+	std::unordered_map<GraphObjID, Sprite> sprites;
+	std::unordered_map<GraphObjID, Button> buttons;
+
+	GraphObjID createChar(char character, double x, double y, uint pixWidth, uint pixHeight);
+	bool mouseIsInside(Rect rect);
+	void handleInteractions();
+
 public:
 	GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath);
 	GraphObjID createModel(std::string modelPath, TextureID texture_id, glm::vec3 pos);
@@ -54,9 +66,12 @@ public:
 
 	GraphObjID createTextBox(std::string text, double x, double y, uint width, uint height);
 
-	GraphObjID createButton(std::string text, double x, double y, uint width, uint height);
+	GraphObjID createButton(void (*onLeftClick)(), std::string text, double x, double y, uint width, uint height);
 
-	void remove(GraphObjID id);
+	void remove3DModel(GraphObjID id);
+	void removeTextBox(GraphObjID id);
+	void removeButton(GraphObjID id);
+	void removeSprite(GraphObjID id);
 
 	TextureID createTexture(std::string texturePath);
 	void setTextureForModel(TextureID texture_id, GraphObjID model_id);

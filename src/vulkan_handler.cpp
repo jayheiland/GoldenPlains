@@ -70,6 +70,15 @@ void VulkanHandler::initVulkan(std::string vertShdrPath, std::string fragShdrPat
 	createSyncObjects();
 }
 
+void VulkanHandler::getMousePos(double *xpos, double *ypos){
+	glfwGetCursorPos(window, xpos, ypos);
+
+}
+
+int VulkanHandler::getMouseButton(int button){
+	return glfwGetMouseButton(window, button);
+}
+
 void VulkanHandler::draw() {
 	glfwPollEvents();
 	drawFrame();
@@ -1232,15 +1241,6 @@ void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, doub
 	float glyphScale = 1.0;
 	float glyWidth = ((float)pixWidth/WIDTH) * glyphScale;
 	float glyHeight = ((float)pixHeight/HEIGHT) * glyphScale;
-	std::cout << glyWidth << ", " << glyHeight << std::endl;
-	std::cout << "x: " << x << std::endl;
-	std::cout << "x+glyWidth: " << x+glyWidth << std::endl;
-	std::cout << "y: " << y << std::endl;
-	std::cout << "y+glyWidth: " << y+glyWidth << std::endl;
-	// {u, v}
-	// {u+u_offset, v}
-	// {u, v+v_offset}
-	// {u+u_offset, v+v_offset}
 	const std::vector<Vertex> vertices = {
 		{{x, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v+v_offset}},
 		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
@@ -1494,10 +1494,9 @@ void VulkanHandler::createSyncObjects() {
 }
 
 void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	//static auto startTime = std::chrono::high_resolution_clock::now();
+	//auto currentTime = std::chrono::high_resolution_clock::now();
+	//float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	for (auto& mdl : loadedModels) {
 		if(!mdl.second.queued_for_destruction){
@@ -1515,14 +1514,13 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 			}
 			else{
 				//rotate the model
-				//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 				//ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
 				//translate the model
 				ubo.model = glm::translate(glm::mat4(1.0f), mdl.second.position);
 
 				ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-				ubo.proj = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -2.0f, 2.0f);
+				ubo.proj = glm::ortho(0.0f, 1.0f, -1.0f, 0.0f, -2.0f, 2.0f);
 				ubo.proj[1][1] *= -1;
 			}
 

@@ -42,3 +42,7 @@ set_property(TARGET stress PROPERTY CXX_STANDARD 17)
 add_executable(text samples/text.cpp)
 target_link_libraries(text goldenplains)
 set_property(TARGET text PROPERTY CXX_STANDARD 17)
+
+add_executable(button samples/button.cpp)
+target_link_libraries(button goldenplains)
+set_property(TARGET button PROPERTY CXX_STANDARD 17)
