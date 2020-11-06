@@ -299,7 +299,7 @@ public:
 	void setModelPosition(uint32_t id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 	std::pair<uint32_t, uint32_t> getScreenDimensions();
-	void createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight);
+	void createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight, glm::vec3 color);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();

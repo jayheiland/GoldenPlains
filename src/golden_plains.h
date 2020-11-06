@@ -18,7 +18,7 @@ struct Rect{
 };
 
 struct Sprite{
-	TextureID texture_id;
+	GraphObjID model;
 	Rect rect;
 };
 
@@ -30,7 +30,7 @@ struct TextBox{
 struct Button{
 	GraphObjID textbox;
 	GraphObjID sprite;
-	void (*onLeftClick)();
+	void (*onLeftClick)(GraphObjID);
 };
 
 class GraphicsLayer
@@ -65,8 +65,8 @@ public:
 	void loadFont(std::string path);
 
 	GraphObjID createTextBox(std::string text, double x, double y, uint width, uint height);
-
-	GraphObjID createButton(void (*onLeftClick)(), std::string text, double x, double y, uint width, uint height);
+	GraphObjID createButton(void (*onLeftClick)(GraphObjID), std::string text, double x, double y, uint width, uint height);
+	GraphObjID createSprite(TextureID texture,  double x, double y, uint width, uint height);
 
 	void remove3DModel(GraphObjID id);
 	void removeTextBox(GraphObjID id);

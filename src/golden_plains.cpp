@@ -14,7 +14,7 @@ GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 }
 
 GraphObjID GraphicsLayer::createChar(char character, double x, double y, uint pixWidth, uint pixHeight){
-	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset, pixWidth, pixHeight);
+	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset, pixWidth, pixHeight, glm::vec3(1.0f, 1.0f, 1.0f));
 	return id_counter++;
 }
 
@@ -30,7 +30,7 @@ void GraphicsLayer::handleInteractions(){
 	if(lmb == GLFW_PRESS && lmbPrevState != GLFW_PRESS){
 		for(auto button : buttons){
 			if(mouseIsInside(textBoxes[button.second.textbox].rect)){
-				button.second.onLeftClick();
+				button.second.onLeftClick(button.first);
 			}
 		}
 	}
@@ -107,12 +107,24 @@ GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, ui
 	return id_counter++;
 }
 
-GraphObjID GraphicsLayer::createButton(void (*onLeftClick)(), std::string text, double x, double y, uint width, uint height){
+GraphObjID GraphicsLayer::createButton(void (*onLeftClick)(GraphObjID), std::string text, double x, double y, uint width, uint height){
 	Button button;
 	button.textbox = createTextBox(text, x, y, width, height);
 	button.sprite = GUI_NULL_ID;
 	button.onLeftClick = onLeftClick;
 	buttons[id_counter] = button;
+	return id_counter++;
+}
+
+GraphObjID GraphicsLayer::createSprite(TextureID texture_id,  double x, double y, uint width, uint height){
+	Sprite sprite;
+	sprite.rect.x = x;
+	sprite.rect.y = y;
+	sprite.rect.w = width;
+	sprite.rect.h = height;
+	sprite.model = id_counter;
+	vulkHandler.createGlyph(id_counter++, texture_id, x, y, 0, 0, 1, 1, width, height, glm::vec3(1.0f, 1.0f, 1.0f));
+	sprites[id_counter] = sprite;
 	return id_counter++;
 }
 

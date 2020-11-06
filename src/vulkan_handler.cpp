@@ -588,7 +588,13 @@ void VulkanHandler::createGraphicsPipeline() {
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -1235,7 +1241,7 @@ std::pair<uint32_t, uint32_t> VulkanHandler::getScreenDimensions(){
 	return std::make_pair(WIDTH, HEIGHT);
 }
 
-void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight){
+void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight, glm::vec3 color){
 	Model newGlyph;
 	std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
 	float glyphScale = 1.0;
@@ -1450,7 +1456,7 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 	renderPassInfo.renderArea.extent = swapChainExtent;
 
 	std::array<VkClearValue, 2> clearValues = {};
-	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clearValues[0].color = { 0.0f, 0.0f, 0.1f, 1.0f };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

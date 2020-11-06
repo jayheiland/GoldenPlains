@@ -13,6 +13,18 @@ int main() {
 
 	grphLyr.createTextBox("Important information about the app.", 0.6, 0.7, 0, 0);
 
+	TextureID txtr = grphLyr.createTexture("textures/viking_room.png");
+
+	TextureID txtr2 = grphLyr.createTexture("textures/chars/font.png");
+
+	grphLyr.createSprite(txtr2, 0, 0, 200, 200);
+
+	GraphObjID model_2 = grphLyr.createModel("models/viking_room.obj", txtr2, glm::vec3(0.0f, 0.5f, 0.0f));
+
+	GraphObjID model_3 = grphLyr.createModel("models/viking_room.obj", txtr2, glm::vec3(0.0f, -0.5f, 0.0f));
+
+	GraphObjID model_1 = grphLyr.createModel("models/viking_room.obj", txtr, glm::vec3(0.0f, 0.0f, 0.0f));
+
 	while (!grphLyr.windowShouldClose()) {
 		grphLyr.draw();
 	}
