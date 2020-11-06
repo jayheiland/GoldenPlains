@@ -1,1 +1,0 @@
-/usr/bin/c++  -g   CMakeFiles/stress.dir/samples/stress.cpp.o  -o stress  -Wl,-rpath,/home/jay/Projects/GoldenPlains libgoldenplains.so /usr/local/lib/libglfw3.a /usr/lib/x86_64-linux-gnu/librt.so -lm -ldl /usr/lib/x86_64-linux-gnu/libX11.so -lpthread /usr/lib/x86_64-linux-gnu/libvulkan.so 
