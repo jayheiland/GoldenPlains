@@ -53,9 +53,11 @@ private:
 	GraphObjID createChar(char character, double x, double y, uint pixWidth, uint pixHeight);
 	bool mouseIsInside(Rect rect);
 	void handleInteractions();
+	void debugLog(std::string msg);
 
 public:
 	GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath);
+	void setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int));
 	GraphObjID createModel(std::string modelPath, TextureID texture_id, glm::vec3 pos);
 	GraphObjID duplicateModel(GraphObjID original_model_id);
 	void destroyModel(GraphObjID model_id);
@@ -63,9 +65,10 @@ public:
 	void setModelPosition(GraphObjID model_id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 	void loadFont(std::string path);
+	std::pair<uint, uint> getScreenDimensions();
 
-	GraphObjID createTextBox(std::string text, double x, double y, uint width, uint height);
-	GraphObjID createButton(void (*onLeftClick)(GraphObjID), std::string text, double x, double y, uint width, uint height);
+	GraphObjID createTextBox(std::string text, double x, double y);
+	GraphObjID createButton(void (*onLeftClick)(GraphObjID), std::string text, double x, double y);
 	GraphObjID createSprite(TextureID texture,  double x, double y, uint width, uint height);
 
 	void remove3DModel(GraphObjID id);

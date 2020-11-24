@@ -179,7 +179,7 @@ private:
 
 	struct Model {
 		bool queued_for_destruction;
-		bool is_gui_element;
+		bool is_glyph;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 		VkBuffer vertexBuffer;
@@ -289,7 +289,8 @@ public:
 	void initWindow();
 	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
 	void getMousePos(double *xpos, double *ypos);
-	int getMouseButton(int button);
+	int getMouseButtonState(int button);
+	void setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int));
 	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos);
 	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
 	void queueDestroyModel(uint32_t id);

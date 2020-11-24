@@ -72,11 +72,14 @@ void VulkanHandler::initVulkan(std::string vertShdrPath, std::string fragShdrPat
 
 void VulkanHandler::getMousePos(double *xpos, double *ypos){
 	glfwGetCursorPos(window, xpos, ypos);
-
 }
 
-int VulkanHandler::getMouseButton(int button){
+int VulkanHandler::getMouseButtonState(int button){
 	return glfwGetMouseButton(window, button);
+}
+
+void VulkanHandler::setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int)){
+	glfwSetKeyCallback(window, onKeyPress);
 }
 
 void VulkanHandler::draw() {
@@ -1060,7 +1063,7 @@ void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t textu
 
 	newModel.texture_id = texture_id;
 	newModel.queued_for_destruction = false;
-	newModel.is_gui_element = false;
+	newModel.is_glyph = false;
 	newModel.position = pos;
 	newModel.valid_frames = (uint32_t)swapChainImages.size();
 	loadedModels.insert(std::make_pair(id, newModel));
@@ -1267,7 +1270,7 @@ void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, doub
 
 	newGlyph.texture_id = texture_id;
 	newGlyph.queued_for_destruction = false;
-	newGlyph.is_gui_element = true;
+	newGlyph.is_glyph = true;
 	newGlyph.position = glm::vec3(0.0f, 0.0f, 0.0f);
 	newGlyph.valid_frames = (uint32_t)swapChainImages.size();
 	loadedModels.insert(std::make_pair(id, newGlyph));
@@ -1464,6 +1467,25 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 
 	vkCmdBeginRenderPass(primaryCommandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 
+	//determine draw order
+	std::vector<uint32_t> modelIDs;
+	std::vector<uint32_t> glyphIDs;
+	for(auto mdl : loadedModels){
+		if(mdl.second.is_glyph){
+			glyphIDs.push_back(mdl.first);
+		}
+		else{
+			modelIDs.push_back(mdl.first);
+		}
+	}
+	modelIDs.insert(modelIDs.end(), glyphIDs.begin(), glyphIDs.end());
+
+	for(uint32_t id : modelIDs){
+		if (!loadedModels.at(id).queued_for_destruction) {
+			vkCmdExecuteCommands(primaryCommandBuffers[imageIndex], 1, &loadedModels.at(id).secondaryCommandBuffers[imageIndex]);
+		}
+	}
+
 	for (auto& mdl : loadedModels) {
 		if (!mdl.second.queued_for_destruction) {
 			vkCmdExecuteCommands(primaryCommandBuffers[imageIndex], 1, &mdl.second.secondaryCommandBuffers[imageIndex]);
@@ -1507,7 +1529,7 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 	for (auto& mdl : loadedModels) {
 		if(!mdl.second.queued_for_destruction){
 			UniformBufferObject ubo = {};
-			if(!mdl.second.is_gui_element){
+			if(!mdl.second.is_glyph){
 				//rotate the model
 				//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 				ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));

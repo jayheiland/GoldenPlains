@@ -13,7 +13,7 @@ int main() {
 
 	grphLyr.loadFont("textures/chars/font.png");
 
-    grphLyr.createButton(on_click, "Click here!", 0, 0, 150, 40);
+    grphLyr.createButton(on_click, "Click here!", 0.1, 0.8);
 	grphLyr.createSprite(txtr, 0, 0, 150, 40);
 
 	while (!grphLyr.windowShouldClose()) {

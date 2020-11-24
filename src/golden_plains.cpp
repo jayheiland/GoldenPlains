@@ -13,29 +13,38 @@ GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 	}
 }
 
+void GraphicsLayer::setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int)){
+	vulkHandler.setKeyEventCallback(onKeyPress);
+}
+
 GraphObjID GraphicsLayer::createChar(char character, double x, double y, uint pixWidth, uint pixHeight){
 	vulkHandler.createGlyph(id_counter, font, x, y, fontUVCoords.at(character).first, fontUVCoords.at(character).second, font_u_offset, font_v_offset, pixWidth, pixHeight, glm::vec3(1.0f, 1.0f, 1.0f));
 	return id_counter++;
 }
 
 bool GraphicsLayer::mouseIsInside(Rect rect){
-	mousePosY = (double)vulkHandler.getScreenDimensions().second - mousePosY;
-	return (mousePosX >= rect.x && mousePosX <= rect.x+rect.w && mousePosY >= rect.y && mousePosY <= rect.y+rect.h);
+	double modMousePosY = (double)vulkHandler.getScreenDimensions().second - mousePosY;
+	return (mousePosX >= rect.x && mousePosX <= rect.x+rect.w && modMousePosY >= rect.y && modMousePosY <= rect.y+rect.h);
 }
 
 void GraphicsLayer::handleInteractions(){
-	int lmb = vulkHandler.getMouseButton(GLFW_MOUSE_BUTTON_LEFT);
-	int rmb = vulkHandler.getMouseButton(GLFW_MOUSE_BUTTON_RIGHT);
+	int lmb = vulkHandler.getMouseButtonState(GLFW_MOUSE_BUTTON_LEFT);
+	int rmb = vulkHandler.getMouseButtonState(GLFW_MOUSE_BUTTON_RIGHT);
 
 	if(lmb == GLFW_PRESS && lmbPrevState != GLFW_PRESS){
 		for(auto button : buttons){
 			if(mouseIsInside(textBoxes[button.second.textbox].rect)){
+				Rect r = textBoxes[button.second.textbox].rect;
 				button.second.onLeftClick(button.first);
 			}
 		}
 	}
 	lmbPrevState = lmb;
 	rmbPrevState = rmb;
+}
+
+void GraphicsLayer::debugLog(std::string msg){
+	std::cout << "GoldenPlains: " << msg << std::endl;
 }
 
 GraphObjID GraphicsLayer::createModel(std::string modelPath, TextureID texture_id, glm::vec3 pos){
@@ -86,7 +95,11 @@ void GraphicsLayer::loadFont(std::string path){
 	font = createTexture(path);
 }
 
-GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, uint width, uint height){
+std::pair<uint, uint> GraphicsLayer::getScreenDimensions(){
+	return vulkHandler.getScreenDimensions();
+}
+
+GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y){
 	TextBox textbox;
 	std::vector<GraphObjID> textChars;
 	uint charPixWidth = 10;
@@ -99,17 +112,18 @@ GraphObjID GraphicsLayer::createTextBox(std::string text, double x, double y, ui
 		textChars.push_back(char_id);
 	}
 	textbox.char_models.insert(textbox.char_models.begin(), textChars.begin(), textChars.end());
-	textbox.rect.x = x;
-	textbox.rect.y = y;
-	textbox.rect.w = width;
-	textbox.rect.h = height;
+	auto dimen = vulkHandler.getScreenDimensions();
+	textbox.rect.x = x*dimen.first;
+	textbox.rect.y = y*dimen.second;
+	textbox.rect.w = (int)text.length() * charPixWidth;
+	textbox.rect.h = charPixHeight;
 	textBoxes[id_counter] = textbox;
 	return id_counter++;
 }
 
-GraphObjID GraphicsLayer::createButton(void (*onLeftClick)(GraphObjID), std::string text, double x, double y, uint width, uint height){
+GraphObjID GraphicsLayer::createButton(void (*onLeftClick)(GraphObjID), std::string text, double x, double y){
 	Button button;
-	button.textbox = createTextBox(text, x, y, width, height);
+	button.textbox = createTextBox(text, x, y);
 	button.sprite = GUI_NULL_ID;
 	button.onLeftClick = onLeftClick;
 	buttons[id_counter] = button;
