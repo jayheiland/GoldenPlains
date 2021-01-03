@@ -82,6 +82,18 @@ void VulkanHandler::setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,i
 	glfwSetKeyCallback(window, onKeyPress);
 }
 
+glm::mat4 VulkanHandler::getProjectionMatrix(){
+	return camera.projMat;
+}
+
+glm::mat4 VulkanHandler::getViewMatrix(){
+	return camera.viewMat;
+}
+
+glm::vec3 VulkanHandler::getCameraPosition(){
+	return camera.cameraPos;
+}
+
 void VulkanHandler::draw() {
 	glfwPollEvents();
 	drawFrame();
@@ -1532,13 +1544,16 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 			if(!mdl.second.is_glyph){
 				//rotate the model
 				//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-				ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 				//translate the model
-				ubo.model = glm::translate(ubo.model, mdl.second.position);
+				ubo.model = glm::translate(glm::mat4(1.0f), mdl.second.position);
 
 				ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
 				ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
-				ubo.proj[1][1] *= -1;
+				camera.projMat = ubo.proj;
+				ubo.proj[1][1] *= -1;/*this flips the sign on the scaling factor of the Y axis in the projection matrix (because GLM 
+				was designed for OpenGL, where the Y coordinate of the clip coordinates is inverted)*/
+				camera.viewMat = ubo.view;
 			}
 			else{
 				//rotate the model

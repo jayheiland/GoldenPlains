@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -g  -shared -Wl,-soname,libgoldenplains.so -o libgoldenplains.so CMakeFiles/goldenplains.dir/src/vulkan_handler.cpp.o CMakeFiles/goldenplains.dir/src/golden_plains.cpp.o  /usr/local/lib/libglfw3.a /usr/lib/x86_64-linux-gnu/libvulkan.so -lpthread /usr/lib/x86_64-linux-gnu/librt.so -lm -ldl 

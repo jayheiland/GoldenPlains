@@ -17,7 +17,6 @@
 #include <stb_image.h>
 
 
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -31,11 +30,6 @@
 #include <optional>
 #include <set>
 #include <unordered_map>
-
-
-
-
-
 
 
 struct QueueFamilyIndices {
@@ -215,6 +209,8 @@ private:
 	struct Camera {
 		glm::vec3 cameraPos;
 		glm::vec3 targetPos;
+		glm::mat4 projMat;
+		glm::mat4 viewMat;
 	};
 
 	Camera camera;
@@ -291,6 +287,9 @@ public:
 	void getMousePos(double *xpos, double *ypos);
 	int getMouseButtonState(int button);
 	void setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int));
+	glm::mat4 getProjectionMatrix();
+	glm::mat4 getViewMatrix();
+	glm::vec3 getCameraPosition();
 	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos);
 	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
 	void queueDestroyModel(uint32_t id);
