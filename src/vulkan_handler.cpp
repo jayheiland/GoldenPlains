@@ -1034,6 +1034,15 @@ void VulkanHandler::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t w
 	endSingleTimeCommands(commandBuffer);
 }
 
+void VulkanHandler::setModelPosition(uint32_t model_id, glm::vec3 pos){
+	loadedModels.at(model_id).position = pos;
+}
+
+void VulkanHandler::setModelRotation(uint32_t model_id, glm::vec3 rotAxis, float rotAngle){
+	loadedModels.at(model_id).rotAxis = rotAxis;
+	loadedModels.at(model_id).rotAngle = rotAngle;
+}
+
 void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -1077,6 +1086,8 @@ void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t textu
 	newModel.queued_for_destruction = false;
 	newModel.is_glyph = false;
 	newModel.position = pos;
+	newModel.rotAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+	newModel.rotAngle = 0.0f;
 	newModel.valid_frames = (uint32_t)swapChainImages.size();
 	loadedModels.insert(std::make_pair(id, newModel));
 
@@ -1241,10 +1252,6 @@ void VulkanHandler::setTextureForModel(uint32_t texture_id, uint32_t model_id) {
 	loadedModels.at(model_id).texture_id = texture_id;
 	createDescriptorSets(model_id);
 	createSecondaryCommandBuffers(model_id);
-}
-
-void VulkanHandler::setModelPosition(uint32_t id, glm::vec3 pos){
-	loadedModels.at(id).position = pos;
 }
 
 void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
@@ -1547,6 +1554,7 @@ void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
 				//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 				//translate the model
 				ubo.model = glm::translate(glm::mat4(1.0f), mdl.second.position);
+				ubo.model = glm::rotate(ubo.model, mdl.second.rotAngle, mdl.second.rotAxis);
 
 				ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
 				ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);

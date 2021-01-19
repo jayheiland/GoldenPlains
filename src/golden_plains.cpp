@@ -8,6 +8,7 @@ const int MIDDLE =2;
 GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath){
 	id_counter = 1;
 	nearestHit_LeftClick = 0;
+	nearestHit_RightClick = 0;
 	font_u_offset = 0.03794;
 	font_v_offset = 0.33;
 	try {
@@ -96,8 +97,6 @@ bool HitBoundingBox(double minB[NUMDIM], double maxB[NUMDIM]/*box */, double ori
 }
 
 GraphObjID GraphicsLayer::mousePick_getNearestHit(){
-	std::cout << "Entered mousePick_getNearestHit" << std::endl;
-
 	std::pair<uint32_t, uint32_t> dimens = vulkHandler.getScreenDimensions();
 	float x = (2.0f * mousePosX) / dimens.first - 1.0f;
 	float y = 1.0f - (2.0f * mousePosY) / dimens.second;
@@ -119,13 +118,10 @@ GraphObjID GraphicsLayer::mousePick_getNearestHit(){
 		double dir[NUMDIM] = {ray_world.x, ray_world.y, ray_world.z};
 		double coord[NUMDIM];
 		if(HitBoundingBox(minBound, maxBound, origin, dir, coord)){
-			std::cout << "Hit a bounding box! Box has minBound: " << box.second.minBound.x << "," << box.second.minBound.y << "," << box.second.minBound.z << " and maxBound: " << box.second.maxBound.x << "," << box.second.maxBound.y << "," << box.second.maxBound.z << std::endl;
 			double cubedDist = std::abs((std::pow(coord[0]-origin[0], 3) + std::pow(coord[1]-origin[1], 3) + std::pow(coord[2]-origin[2], 3)));
-			std::cout << "Found dist of: " << cubedDist << std::endl;
 			if(cubedDist < leastDist){
 				nearestBox = box.first;
 				leastDist = cubedDist;
-				std::cout << "New closest box is: " << nearestBox << std::endl;
 			}
 		}
 	}
@@ -146,7 +142,9 @@ void GraphicsLayer::handleInteractions(){
 		}
 		//handle 3D bounding box intersections
 		nearestHit_LeftClick = mousePick_getNearestHit();
-		std::cout << "Set nearestHit_LeftClick to :" << nearestHit_LeftClick << std::endl;
+	}
+	else if(rmb == GLFW_PRESS && rmbPrevState != GLFW_PRESS){
+		nearestHit_RightClick = mousePick_getNearestHit();
 	}
 	lmbPrevState = lmb;
 	rmbPrevState = rmb;
@@ -174,8 +172,12 @@ void GraphicsLayer::destroyTexture(TextureID texture_id) {
 	vulkHandler.destroyTexture(texture_id);
 }
 
-void GraphicsLayer::setModelPosition(GraphObjID model, glm::vec3 pos){
-	vulkHandler.setModelPosition(model, pos);
+void GraphicsLayer::setModelPosition(GraphObjID model_id, glm::vec3 pos){
+	vulkHandler.setModelPosition(model_id, pos);
+}
+
+void GraphicsLayer::setModelRotation(GraphObjID model_id, glm::vec3 rotAxis, float rotAngle){
+	vulkHandler.setModelRotation(model_id, rotAxis, rotAngle);
 }
 
 void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
@@ -208,9 +210,13 @@ std::pair<uint, uint> GraphicsLayer::getScreenDimensions(){
 	return vulkHandler.getScreenDimensions();
 }
 
-GraphObjID GraphicsLayer::getLeftClickedBoundingBox(){
-	GraphObjID result = nearestHit_LeftClick;
-	nearestHit_LeftClick = 0;
+GraphObjID GraphicsLayer::getClickedBoundingBox(MouseButton btn){
+	GraphObjID result;
+	switch (btn)
+	{
+		case LMB: result = nearestHit_LeftClick; nearestHit_LeftClick = 0; break;
+		case RMB: result = nearestHit_RightClick; nearestHit_RightClick = 0; break;
+	}
 	return result;
 }
 
