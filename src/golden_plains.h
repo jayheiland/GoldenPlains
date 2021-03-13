@@ -69,9 +69,6 @@ class GraphicsLayer
 		void setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int));
 		void destroyModel(GraphObjID model_id);
 		void destroyTexture(TextureID texture_id);
-		void setModelPosition(GraphObjID model_id, glm::vec3 pos);
-		void setModelRotation(GraphObjID model_id, glm::vec3 rotAxis, float rotAngle);
-		void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 		void loadFont(std::string path);
 		std::pair<uint, uint> getScreenDimensions();
 		GraphObjID getClickedBoundingBox(MouseButton btn);
@@ -90,6 +87,10 @@ class GraphicsLayer
 
 		TextureID createTexture(std::string texturePath);
 		void setTextureForModel(TextureID texture_id, GraphObjID model_id);
+		void setModelPosition(GraphObjID model_id, glm::vec3 pos);
+		void setModelRotation(GraphObjID model_id, glm::vec3 rotAxis, float rotAngle);
+		void setBoundingBoxBounds(GraphObjID bBox_id, glm::vec3 minBound, glm::vec3 maxBound);
+		void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
 
 		void draw();
 		bool windowShouldClose();

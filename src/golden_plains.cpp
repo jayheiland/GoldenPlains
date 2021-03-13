@@ -14,6 +14,7 @@ GraphicsLayer::GraphicsLayer(std::string vertShdrPath, std::string fragShdrPath)
 	try {
 		vulkHandler.initWindow();
 		vulkHandler.initVulkan(vertShdrPath, fragShdrPath);
+		vulkHandler.setCamera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -178,6 +179,12 @@ void GraphicsLayer::setModelPosition(GraphObjID model_id, glm::vec3 pos){
 
 void GraphicsLayer::setModelRotation(GraphObjID model_id, glm::vec3 rotAxis, float rotAngle){
 	vulkHandler.setModelRotation(model_id, rotAxis, rotAngle);
+}
+
+void GraphicsLayer::setBoundingBoxBounds(GraphObjID bBox_id, glm::vec3 minBound, glm::vec3 maxBound){
+	BoundingBox *box = &boundingBoxes.at(bBox_id);
+	box->minBound = minBound;
+	box->maxBound = maxBound;
 }
 
 void GraphicsLayer::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){

@@ -46,3 +46,7 @@ set_property(TARGET text PROPERTY CXX_STANDARD 17)
 add_executable(button samples/button.cpp)
 target_link_libraries(button goldenplains)
 set_property(TARGET button PROPERTY CXX_STANDARD 17)
+
+add_executable(bounding_box samples/bounding_box.cpp)
+target_link_libraries(bounding_box goldenplains)
+set_property(TARGET bounding_box PROPERTY CXX_STANDARD 17)
