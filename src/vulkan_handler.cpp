@@ -70,6 +70,30 @@ void VulkanHandler::initVulkan(std::string vertShdrPath, std::string fragShdrPat
 	createSyncObjects();
 }
 
+void VulkanHandler::getMousePos(double *xpos, double *ypos){
+	glfwGetCursorPos(window, xpos, ypos);
+}
+
+int VulkanHandler::getMouseButtonState(int button){
+	return glfwGetMouseButton(window, button);
+}
+
+void VulkanHandler::setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int)){
+	glfwSetKeyCallback(window, onKeyPress);
+}
+
+glm::mat4 VulkanHandler::getProjectionMatrix(){
+	return camera.projMat;
+}
+
+glm::mat4 VulkanHandler::getViewMatrix(){
+	return camera.viewMat;
+}
+
+glm::vec3 VulkanHandler::getCameraPosition(){
+	return camera.cameraPos;
+}
+
 void VulkanHandler::draw() {
 	glfwPollEvents();
 	drawFrame();
@@ -579,7 +603,13 @@ void VulkanHandler::createGraphicsPipeline() {
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -1004,6 +1034,15 @@ void VulkanHandler::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t w
 	endSingleTimeCommands(commandBuffer);
 }
 
+void VulkanHandler::setModelPosition(uint32_t model_id, glm::vec3 pos){
+	loadedModels.at(model_id).position = pos;
+}
+
+void VulkanHandler::setModelRotation(uint32_t model_id, glm::vec3 rotAxis, float rotAngle){
+	loadedModels.at(model_id).rotAxis = rotAxis;
+	loadedModels.at(model_id).rotAngle = rotAngle;
+}
+
 void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -1045,7 +1084,10 @@ void VulkanHandler::loadModel(uint32_t id, std::string modelPath, uint32_t textu
 
 	newModel.texture_id = texture_id;
 	newModel.queued_for_destruction = false;
+	newModel.is_glyph = false;
 	newModel.position = pos;
+	newModel.rotAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+	newModel.rotAngle = 0.0f;
 	newModel.valid_frames = (uint32_t)swapChainImages.size();
 	loadedModels.insert(std::make_pair(id, newModel));
 
@@ -1212,13 +1254,51 @@ void VulkanHandler::setTextureForModel(uint32_t texture_id, uint32_t model_id) {
 	createSecondaryCommandBuffers(model_id);
 }
 
-void VulkanHandler::setModelPosition(uint32_t id, glm::vec3 pos){
-	loadedModels.at(id).position = pos;
-}
-
 void VulkanHandler::setCamera(glm::vec3 cameraPos, glm::vec3 targetPos){
 	camera.cameraPos = cameraPos;
 	camera.targetPos = targetPos;
+}
+
+std::pair<uint32_t, uint32_t> VulkanHandler::getScreenDimensions(){
+	return std::make_pair(WIDTH, HEIGHT);
+}
+
+void VulkanHandler::createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight, glm::vec3 color){
+	Model newGlyph;
+	std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
+	float glyphScale = 1.0;
+	float glyWidth = ((float)pixWidth/WIDTH) * glyphScale;
+	float glyHeight = ((float)pixHeight/HEIGHT) * glyphScale;
+	const std::vector<Vertex> vertices = {
+		{{x, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v+v_offset}},
+		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}},
+		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
+
+		{{x+glyWidth, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v}},
+		{{x, y+glyHeight, 0.0f}, {1.0f, 1.0f, 1.0f}, {u, v}},
+		{{x+glyWidth, y, 0.0f}, {1.0f, 1.0f, 1.0f}, {u+u_offset, v+v_offset}}
+	};
+	for(Vertex vertex : vertices){
+		if (uniqueVertices.count(vertex) == 0) {
+			uniqueVertices[vertex] = static_cast<uint32_t>(newGlyph.vertices.size());
+			newGlyph.vertices.push_back(vertex);
+		}
+
+		newGlyph.indices.push_back(uniqueVertices[vertex]);
+	}
+
+	newGlyph.texture_id = texture_id;
+	newGlyph.queued_for_destruction = false;
+	newGlyph.is_glyph = true;
+	newGlyph.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	newGlyph.valid_frames = (uint32_t)swapChainImages.size();
+	loadedModels.insert(std::make_pair(id, newGlyph));
+
+	createVertexBuffer(id);
+	createIndexBuffer(id);
+	createUniformBuffers(id);
+	createDescriptorSets(id);
+	createSecondaryCommandBuffers(id);
 }
 
 void VulkanHandler::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1334,7 +1414,7 @@ void VulkanHandler::createPrimaryCommandBuffers() {
 void VulkanHandler::recordSecondaryCommandBuffers(uint32_t imageIndex){
 	for (auto& mdl : loadedModels) {
 		if (!mdl.second.queued_for_destruction) {
-			if (vkResetCommandBuffer(mdl.second.secondaryCommandBuffers[imageIndex], NULL) != VK_SUCCESS) {
+			if (vkResetCommandBuffer(mdl.second.secondaryCommandBuffers[imageIndex], 0x0) != VK_SUCCESS) {
 				throw std::runtime_error("failed to reset secondary command buffer!");
 			}
 		}
@@ -1379,7 +1459,7 @@ void VulkanHandler::recordSecondaryCommandBuffers(uint32_t imageIndex){
 void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 	recordSecondaryCommandBuffers(imageIndex);
 
-	if (vkResetCommandBuffer(primaryCommandBuffers[imageIndex], NULL) != VK_SUCCESS) {
+	if (vkResetCommandBuffer(primaryCommandBuffers[imageIndex], 0x0) != VK_SUCCESS) {
 		throw std::runtime_error("failed to reset primary command buffer!");
 	}
 
@@ -1398,13 +1478,32 @@ void VulkanHandler::recordCommandBuffers(uint32_t imageIndex){
 	renderPassInfo.renderArea.extent = swapChainExtent;
 
 	std::array<VkClearValue, 2> clearValues = {};
-	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clearValues[0].color = { 0.0f, 0.0f, 0.1f, 1.0f };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(primaryCommandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+
+	//determine draw order
+	std::vector<uint32_t> modelIDs;
+	std::vector<uint32_t> glyphIDs;
+	for(auto mdl : loadedModels){
+		if(mdl.second.is_glyph){
+			glyphIDs.push_back(mdl.first);
+		}
+		else{
+			modelIDs.push_back(mdl.first);
+		}
+	}
+	modelIDs.insert(modelIDs.end(), glyphIDs.begin(), glyphIDs.end());
+
+	for(uint32_t id : modelIDs){
+		if (!loadedModels.at(id).queued_for_destruction) {
+			vkCmdExecuteCommands(primaryCommandBuffers[imageIndex], 1, &loadedModels.at(id).secondaryCommandBuffers[imageIndex]);
+		}
+	}
 
 	for (auto& mdl : loadedModels) {
 		if (!mdl.second.queued_for_destruction) {
@@ -1442,23 +1541,39 @@ void VulkanHandler::createSyncObjects() {
 }
 
 void VulkanHandler::updateUniformBuffer(uint32_t currentImage) {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	//static auto startTime = std::chrono::high_resolution_clock::now();
+	//auto currentTime = std::chrono::high_resolution_clock::now();
+	//float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	for (auto& mdl : loadedModels) {
 		if(!mdl.second.queued_for_destruction){
 			UniformBufferObject ubo = {};
-			//rotate the model
-			//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-			//translate the model
-			ubo.model = glm::translate(ubo.model, mdl.second.position);
+			if(!mdl.second.is_glyph){
+				//rotate the model
+				//ubo.model = glm::rotate(glm::mat4(1.0f), (float)0.1 * time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				//ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				//translate the model
+				ubo.model = glm::translate(glm::mat4(1.0f), mdl.second.position);
+				ubo.model = glm::rotate(ubo.model, mdl.second.rotAngle, mdl.second.rotAxis);
 
-			ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
-			ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
-			ubo.proj[1][1] *= -1;
+				ubo.view = glm::lookAt(camera.cameraPos, camera.targetPos, glm::vec3(0.0f, 0.0f, 1.0f));
+				ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
+				camera.projMat = ubo.proj;
+				ubo.proj[1][1] *= -1;/*this flips the sign on the scaling factor of the Y axis in the projection matrix (because GLM 
+				was designed for OpenGL, where the Y coordinate of the clip coordinates is inverted)*/
+				camera.viewMat = ubo.view;
+			}
+			else{
+				//rotate the model
+				//ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f));
+				//translate the model
+				ubo.model = glm::translate(glm::mat4(1.0f), mdl.second.position);
+
+				ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+				ubo.proj = glm::ortho(0.0f, 1.0f, -1.0f, 0.0f, -2.0f, 2.0f);
+				ubo.proj[1][1] *= -1;
+			}
 
 			void* data;
 			vkMapMemory(device, mdl.second.uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);

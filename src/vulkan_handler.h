@@ -17,7 +17,6 @@
 #include <stb_image.h>
 
 
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -31,11 +30,6 @@
 #include <optional>
 #include <set>
 #include <unordered_map>
-
-
-
-
-
 
 
 struct QueueFamilyIndices {
@@ -117,8 +111,8 @@ class VulkanHandler {
 private:
 	const bool enableValidationLayers = false;
 
-	const uint32_t WIDTH = 800;
-	const uint32_t HEIGHT = 600;
+	const uint32_t WIDTH = 1200;
+	const uint32_t HEIGHT = 675;
 
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -170,8 +164,16 @@ private:
 
 	std::unordered_map<uint32_t, Texture> loadedTextures;
 
+	struct Glyph {
+		int32_t x,y;
+		uint32_t texture_id;
+	};
+
+	std::unordered_map<uint32_t, Glyph> loadedGlyphs;
+
 	struct Model {
 		bool queued_for_destruction;
+		bool is_glyph;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;
 		VkBuffer vertexBuffer;
@@ -186,9 +188,12 @@ private:
 		uint32_t valid_frames; //number of frames for which this model has valid data
 
 		glm::vec3 position;
+		float rotAngle;
+		glm::vec3 rotAxis;
 	};
 
 	std::unordered_map<uint32_t, Model> loadedModels;
+
 	std::vector <VkCommandBuffer> primaryCommandBuffers;
 
 	VkDescriptorPool descriptorPool;
@@ -207,6 +212,8 @@ private:
 	struct Camera {
 		glm::vec3 cameraPos;
 		glm::vec3 targetPos;
+		glm::mat4 projMat;
+		glm::mat4 viewMat;
 	};
 
 	Camera camera;
@@ -280,14 +287,23 @@ private:
 public:
 	void initWindow();
 	void initVulkan(std::string vertShdrPath, std::string fragShdrPath);
+	void getMousePos(double *xpos, double *ypos);
+	int getMouseButtonState(int button);
+	void setKeyEventCallback(void (*onKeyPress)(GLFWwindow*,int,int,int,int));
+	glm::mat4 getProjectionMatrix();
+	glm::mat4 getViewMatrix();
+	glm::vec3 getCameraPosition();
+	void setModelPosition(uint32_t model_id, glm::vec3 pos);
+	void setModelRotation(uint32_t model_id, glm::vec3 rotAxis, float rotAngle);
 	void loadModel(uint32_t id, std::string modelPath, uint32_t texture_id, glm::vec3 pos);
 	void duplicateModel(uint32_t duplicate_id, uint32_t original_id);
 	void queueDestroyModel(uint32_t id);
 	void destroyTexture(uint32_t id);
 	void loadTexture(uint32_t id, std::string texturePath);
 	void setTextureForModel(uint32_t texture_id, uint32_t model_id);
-	void setModelPosition(uint32_t id, glm::vec3 pos);
 	void setCamera(glm::vec3 cameraPos, glm::vec3 targetPos);
+	std::pair<uint32_t, uint32_t> getScreenDimensions();
+	void createGlyph(uint32_t id, uint32_t texture_id, double x, double y, double u, double v, double u_offset, double v_offset, int pixWidth, int pixHeight, glm::vec3 color);
 	void draw();
 	bool windowCloseButtonClicked();
 	void cleanup();
