@@ -1,6 +1,5 @@
 *.spv
 *.obj
-*.bmp
 textures
 .vscode
 shaders/*.sh
